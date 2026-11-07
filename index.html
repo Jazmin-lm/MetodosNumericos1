@@ -18,7 +18,6 @@
   --blue: #388bfd;
   --blue-glow: rgba(56, 139, 253, 0.15);
   --teal: #39c5bb;
-  --teal-glow: rgba(57, 197, 187, 0.15);
   --orange: #ff9b26;
   --purple: #bc8cff;
   --green: #3fb950;
@@ -302,7 +301,7 @@ summary { font-weight: 700; cursor: pointer; color: var(--ink-bright); }
   <div class="field"><label for="ln">Carga normal Lₙ</label><input id="ln" type="number" min="0" max="100" step="any" value="20"><div class="unit">Porcentaje (%) · 0 a 100</div></div>
   <div class="field"><label for="k">Tasa de recuperación k</label><input id="k" type="number" min="0.000001" step="any" value="0.25"><div class="unit">Por minuto (min⁻¹)</div></div>
   <div class="field"><label for="time">Tiempo total T</label><input id="time" type="number" min="0.01" step="any" value="20"><div class="unit">Minutos</div></div>
-  <div class="field"><label for="h">Paso principal h</label><input id="h" type="number" min="0.0001" step="any" value="1.5"><div class="unit">Minutos (aumentar para ver error)</div></div>
+  <div class="field"><label for="h">Paso principal h</label><input id="h" type="number" min="0.0001" step="any" value="1.5"><div class="unit">Minutos (aumentar para ver separación)</div></div>
   <div class="field"><label for="h2">Segundo paso h₂</label><input id="h2" type="number" min="0.0001" step="any" value="0.5"><div class="unit">Minutos · comparación</div></div>
   <div class="field"><label for="threshold">Umbral de recuperación</label><input id="threshold" type="number" min="0" max="100" step="any" value="25"><div class="unit">Porcentaje (%)</div></div>
  </div>
@@ -339,7 +338,7 @@ summary { font-weight: 700; cursor: pointer; color: var(--ink-bright); }
  <div class="legend">
   <span style="--c:#f0f6fc">Solución analítica (continua)</span>
   <span style="--c:#ff9b26">Heun (RK2 - discontinua)</span>
-  <span style="--c:#39c5bb">RK4 (puntos/diamante)</span>
+  <span style="--c:#39c5bb">RK4 (puntos/cuadrados)</span>
  </div>
  
  <h3>Curva de carga vs tiempo</h3>
@@ -351,13 +350,32 @@ summary { font-weight: 700; cursor: pointer; color: var(--ink-bright); }
 </section>
 
 <section id="analisis">
- <div class="section-head"><span class="num">06</span><div><h2>Análisis y conclusiones</h2><div class="muted small">Cómo explicar los resultados del experimento</div></div></div>
- <h3>¿Cómo se comparan los métodos?</h3>
+ <div class="section-head"><span class="num">06</span><div><h2>Análisis, interpretación y conclusiones</h2><div class="muted small">Cómo explicar y defender los resultados del experimento</div></div></div>
+ 
+ <h3>1. ¿Qué representa el comportamiento de la curva?</h3>
+ <p>La curva de recuperación muestra una caída acelerada durante los primeros minutos y un aplanamiento gradual a medida que la carga se aproxima al nivel normal (<span class="formula" style="display:inline; padding:2px 6px;">L<sub>n</sub></span>). Esto concuerda con la naturaleza exponencial de la EDO: la tasa de cambio es directamente proporcional a la distancia al valor de equilibrio. En teoría asintótica, el sistema se acerca infinitamente al nivel normal sin alcanzarlo de forma absoluta en tiempo finito.</p>
+
+ <h3>2. Evaluación comparativa del rendimiento de los métodos numéricos</h3>
  <ul>
-  <li><strong>Heun (RK2):</strong> Promedia la pendiente inicial y la final estimada. Posee orden de precisión global 2.</li>
-  <li><strong>RK4 clásico:</strong> Combina cuatro estimaciones de pendiente. Posee orden global 4, mostrando un error insignificante comparado con Heun.</li>
-  <li><strong>Solución analítica:</strong> Funciona como valor exacto de referencia.</li>
+  <li><strong>Método de Heun (RK2):</strong> Al utilizar un esquema predictor-corrector de orden global 2, aproxima correctamente la tendencia general de la curva; sin embargo, al aumentar el tamaño del paso (<span class="formula" style="display:inline; padding:2px 6px;">h</span>), se aprecian desviaciones acumulativas visibles respecto a la trayectoria analítica.</li>
+  <li><strong>Método Runge–Kutta de Cuarto Orden (RK4):</strong> Gracias a su evaluación en cuatro puntos intermedios por intervalo, su error de truncamiento local es del orden de <span class="formula" style="display:inline; padding:2px 6px;">O(h⁵)</span>. En la simulación, esto se traduce en una superposición casi perfecta con la solución exacta, demostrando una eficiencia y estabilidad muy superiores.</li>
  </ul>
+
+ <h3>3. Efecto del tamaño del paso (<span class="formula" style="display:inline; padding:2px 6px;">h</span>)</h3>
+ <p>Al comparar los resultados utilizando distintos tamaños de paso (<span class="formula" style="display:inline; padding:2px 6px;">h</span> y <span class="formula" style="display:inline; padding:2px 6px;">h₂</span>), se comprueba empíricamente que reducir el incremento temporal disminuye drásticamente el error absoluto en ambos algoritmos, validando las cotas teóricas de convergencia estudiadas en métodos numéricos.</p>
+
+ <h3>4. Supuestos y limitaciones del modelo</h3>
+ <ul>
+  <li>Se asume que el factor de recuperación <span class="formula" style="display:inline; padding:2px 6px;">k</span> permanece estático y que la sobrecarga cesa de inmediato al iniciar la observación.</li>
+  <li>El modelo es puramente matemático/demostrativo; para aplicarlo a un entorno real de infraestructura de servidores, los parámetros deberían calibrarse mediante mediciones empíricas de métricas de CPU o colas de procesos.</li>
+ </ul>
+
+ <details><summary>Fórmulas numéricas implementadas (Resumen)</summary>
+  <p><strong>Heun:</strong> Promedia las pendientes al inicio y al final pronosticado del intervalo.</p>
+  <div class="formula">K₁=f(tₙ,Lₙ) , K₂=f(tₙ+h, Lₙ+hK₁)<br>Lₙ₊₁ = Lₙ + (h/2)(K₁ + K₂)</div>
+  <p><strong>RK4:</strong> Utiliza cuatro ponderaciones de pendiente (K₁, K₂, K₃, K₄).</p>
+  <div class="formula">Lₙ₊₁ = Lₙ + (h/6)(K₁ + 2K₂ + 2K₃ + K₄)</div>
+ </details>
 </section>
 
 <footer>Simulación académica · Métodos Numéricos · Modelo simplificado de recuperación de carga de servidor</footer>
@@ -468,13 +486,13 @@ function drawCharts(p,H,R){
   H.forEach((v,i)=>{ if(i===0) ctx.moveTo(X(v.t),Y(v.L)); else ctx.lineTo(X(v.t),Y(v.L)); });
   ctx.strokeStyle="#ff9b26"; ctx.lineWidth=2; ctx.stroke();
   ctx.setLineDash([]);
-  H.forEach(v=>{ ctx.fillStyle="#ff9b26"; ctx.beginPath(); ctx.arc(X(v.t),Y(v.L),4,0,Math.PI*2); ctx.fill(); });
+  H.forEach(v=>{ ctx.fillStyle="#ff9b26"; ctx.beginPath(); ctx.arc(X(v.t),Y(v.L),4.5,0,Math.PI*2); ctx.fill(); });
 
-  // Dibujar RK4 (Puntos Cian + Diamantes)
+  // Dibujar RK4 (Cuadrados Cian)
   R.forEach(v=>{
     ctx.fillStyle="#39c5bb";
     ctx.beginPath();
-    ctx.rect(X(v.t)-3, Y(v.L)-3, 6, 6);
+    ctx.rect(X(v.t)-3.5, Y(v.L)-3.5, 7, 7);
     ctx.fill();
   });
 
@@ -538,7 +556,7 @@ function run(){
   $("interpretation").innerHTML=`Con el paso <strong>h=${p.h} min</strong>:<br>` +
     `• <strong>Heun (RK2)</strong> finaliza en <strong>${fmt(H[n].L,4)}%</strong> (Error absoluto: ${fmt(eH.abs,6)})<br>` +
     `• <strong>RK4</strong> finaliza en <strong>${fmt(R[n].L,4)}%</strong> (Error absoluto: ${fmt(eR.abs,8)})<br><br>` +
-    `<em>Observación:</em> Como se aprecia en el segundo gráfico, RK4 tiene un margen de error prácticamente nulo debido a su orden de precisión 4.`;
+    `<em>Observación:</em> Se observa claramente que la línea naranja (Heun) se separa ligeramente de la curva analítica blanca, mientras que la solución RK4 (cian) sigue la trayectoria de forma casi exacta.`;
 }
 
 $("run").addEventListener("click",run);
