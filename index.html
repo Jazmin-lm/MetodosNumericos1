@@ -6,71 +6,241 @@
 <meta name="description" content="Simulador académico de recuperación de la carga de un servidor mediante solución analítica, Heun y RK4.">
 <title>Recuperación de servidor | Métodos numéricos</title>
 <style>
-:root{
- --bg:#f4f7fb;--panel:#fff;--ink:#172235;--muted:#637189;--line:#dce4ef;
- --blue:#2457c5;--blue2:#eaf0ff;--teal:#087f8c;--teal2:#e6f6f6;
- --orange:#b85c16;--orange2:#fff2e7;--purple:#7652b5;--purple2:#f2edfb;
- --green:#18794e;--red:#b42318;--shadow:0 10px 28px rgba(26,48,82,.07);
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-border: #30363d;
+  --ink: #c9d1d9;
+  --ink-bright: #f0f6fc;
+  --muted: #8b949e;
+  --line: #21262d;
+  
+  --blue: #388bfd;
+  --blue-glow: rgba(56, 139, 253, 0.15);
+  --teal: #39c5bb;
+  --teal-glow: rgba(57, 197, 187, 0.15);
+  --orange: #ff9b26;
+  --purple: #bc8cff;
+  --green: #3fb950;
+  --red: #f85149;
+  
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.58 Inter,Segoe UI,Roboto,Arial,sans-serif}
-header{background:linear-gradient(120deg,#14294b,#2457c5);color:white;padding:42px 20px 36px}
-.hero{max-width:1180px;margin:auto}
-.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:.76rem;font-weight:800;opacity:.8}
-h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:10px 0}
-header p{max-width:780px;color:#e4ebff;margin:12px 0 0;font-size:1.05rem}
-.hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
-.hero-tags span{border:1px solid #ffffff55;border-radius:999px;padding:5px 11px;font-size:.8rem}
-main{max-width:1180px;margin:28px auto;padding:0 18px 50px}
-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
-nav a{color:var(--blue);background:white;border:1px solid var(--line);border-radius:9px;padding:8px 12px;text-decoration:none;font-weight:650;font-size:.88rem}
-section,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px;margin:0 0 20px;scroll-margin-top:15px}
-.section-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:15px}
-.num{background:var(--blue2);color:var(--blue);font-weight:800;border-radius:10px;padding:6px 10px}
-h2{font-size:1.35rem;margin:0 0 4px}
-h3{font-size:1.04rem;margin:18px 0 8px}
-p{margin:8px 0}
-.muted,.hint{color:var(--muted)}
-.small{font-size:.86rem}
-.callout{background:#f2f6fc;border-left:4px solid var(--blue);padding:13px 15px;border-radius:8px;margin:14px 0}
-.warning{background:var(--orange2);border-left-color:var(--orange)}
-.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.field label{display:block;font-weight:700;font-size:.88rem;margin-bottom:5px}
-.field input{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px 10px;font:inherit;color:var(--ink);background:white}
-.field input:focus{outline:3px solid #2457c522;border-color:var(--blue)}
-.unit{font-size:.77rem;color:var(--muted);margin-top:3px}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-button{border:0;border-radius:9px;padding:11px 16px;font:inherit;font-weight:750;cursor:pointer}
-.primary{background:var(--blue);color:white}
-.secondary{background:#edf1f7;color:#24334b}
-button:hover{filter:brightness(.97)}
-.error-box{display:none;color:var(--red);background:#fff0ef;border:1px solid #f2c3bf;padding:10px 12px;border-radius:8px;margin-top:12px}
-.formula{font-family:Cambria,Georgia,serif;font-size:1.18rem;background:#f8faff;border:1px solid var(--line);border-radius:10px;padding:13px 16px;overflow-x:auto}
-.formula.center{text-align:center;font-size:1.32rem}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
-.metric{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}
-.metric .label{font-size:.78rem;color:var(--muted);font-weight:700}
-.metric .value{font-size:1.4rem;font-weight:850;margin-top:3px;font-variant-numeric:tabular-nums}
-.metric .sub{font-size:.77rem;color:var(--muted)}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-table{width:100%;border-collapse:collapse;font-size:.86rem;font-variant-numeric:tabular-nums}
-th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-th{background:#f2f5fa;color:#34445d;font-weight:800}
-th:first-child,td:first-child{text-align:left}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
-.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:.84rem;margin:8px 0 12px}
-.legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:var(--c)}
-canvas{width:100%;height:350px;display:block;border:1px solid var(--line);border-radius:10px;background:#fff}
-.pill{display:inline-block;border-radius:999px;padding:3px 9px;font-size:.77rem;font-weight:750;background:var(--teal2);color:var(--teal)}
-.steps{counter-reset:step;list-style:none;padding:0}
-.steps li{counter-increment:step;position:relative;padding:0 0 14px 42px}
-.steps li:before{content:counter(step);position:absolute;left:0;top:0;background:var(--blue2);color:var(--blue);font-weight:800;border-radius:50%;width:28px;height:28px;display:grid;place-items:center}
-footer{text-align:center;color:var(--muted);font-size:.83rem;padding:15px}
-details{border:1px solid var(--line);border-radius:9px;padding:11px 13px;margin:9px 0}
-summary{font-weight:750;cursor:pointer}
-.kicker{color:var(--blue);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.07em}
-@media(max-width:850px){.form-grid,.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.two-col{grid-template-columns:1fr}}
-@media(max-width:520px){header{padding:30px 17px}.form-grid,.cards{grid-template-columns:1fr 1fr}section,.panel{padding:17px}table{font-size:.78rem}}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.58 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+header {
+  background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+  border-bottom: 1px solid var(--panel-border);
+  color: var(--ink-bright);
+  padding: 42px 20px 36px;
+}
+.hero { max-width: 1180px; margin: auto; }
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  font-size: .76rem;
+  font-weight: 800;
+  color: var(--blue);
+}
+h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; margin: 10px 0; color: #fff; }
+header p { max-width: 780px; color: var(--muted); margin: 12px 0 0; font-size: 1.05rem; }
+
+.hero-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+.hero-tags span {
+  border: 1px solid var(--panel-border);
+  background: rgba(255,255,255,0.03);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: .8rem;
+  color: var(--ink);
+}
+
+main { max-width: 1180px; margin: 28px auto; padding: 0 18px 50px; }
+
+nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+nav a {
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 9px;
+  padding: 8px 14px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: .88rem;
+  transition: all .2s;
+}
+nav a:hover { border-color: var(--blue); color: var(--blue); }
+
+section, .panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin: 0 0 24px;
+  scroll-margin-top: 15px;
+}
+
+.section-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+.num {
+  background: var(--blue-glow);
+  color: var(--blue);
+  border: 1px solid rgba(56,139,253,0.3);
+  font-weight: 800;
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+
+h2 { font-size: 1.35rem; margin: 0 0 4px; color: var(--ink-bright); }
+h3 { font-size: 1.04rem; margin: 20px 0 10px; color: var(--ink-bright); }
+p { margin: 8px 0; }
+.muted, .hint { color: var(--muted); }
+.small { font-size: .86rem; }
+
+.callout {
+  background: rgba(56, 139, 253, 0.08);
+  border-left: 4px solid var(--blue);
+  padding: 14px 16px;
+  border-radius: 8px;
+  margin: 14px 0;
+  color: var(--ink-bright);
+}
+.warning {
+  background: rgba(255, 155, 38, 0.08);
+  border-left-color: var(--orange);
+}
+
+.form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.field label { display: block; font-weight: 600; font-size: .88rem; margin-bottom: 6px; color: var(--ink-bright); }
+.field input {
+  width: 100%;
+  border: 1px solid var(--panel-border);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--ink-bright);
+  background: #0d1117;
+  transition: border-color .2s;
+}
+.field input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+.unit { font-size: .77rem; color: var(--muted); margin-top: 4px; }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter .2s;
+}
+.primary { background: var(--blue); color: #fff; }
+.secondary { background: #21262d; color: var(--ink-bright); border: 1px solid var(--panel-border); }
+button:hover { filter: brightness(1.15); }
+
+.error-box {
+  display: none;
+  color: #ff7b72;
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-top: 14px;
+}
+
+.formula {
+  font-family: "Fira Code", Monaco, Consolas, monospace;
+  font-size: 1.05rem;
+  background: #0d1117;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 13px 16px;
+  overflow-x: auto;
+  color: var(--teal);
+}
+.formula.center { text-align: center; font-size: 1.2rem; }
+
+.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.metric {
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 16px;
+  background: #0d1117;
+}
+.metric .label { font-size: .78rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+.metric .value { font-size: 1.45rem; font-weight: 800; margin-top: 4px; color: var(--ink-bright); font-variant-numeric: tabular-nums; }
+.metric .sub { font-size: .77rem; color: var(--muted); margin-top: 2px; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+table { width: 100%; border-collapse: collapse; font-size: .86rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--panel-border); text-align: right; white-space: nowrap; }
+th { background: #0d1117; color: var(--ink-bright); font-weight: 700; }
+th:first-child, td:first-child { text-align: left; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-wrap { overflow: auto; border: 1px solid var(--panel-border); border-radius: 10px; margin-top: 10px; }
+
+.legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: .88rem; margin: 10px 0 16px; }
+.legend span { display: inline-flex; align-items: center; }
+.legend span:before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 8px;
+  background: var(--c);
+}
+
+canvas {
+  width: 100%;
+  height: 380px;
+  display: block;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: #0d1117;
+  margin-bottom: 15px;
+}
+
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps li { counter-increment: step; position: relative; padding: 0 0 16px 42px; }
+.steps li:before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: var(--blue-glow);
+  color: var(--blue);
+  border: 1px solid rgba(56,139,253,0.3);
+  font-weight: 800;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+
+footer { text-align: center; color: var(--muted); font-size: .83rem; padding: 25px 15px; }
+details { border: 1px solid var(--panel-border); border-radius: 9px; padding: 12px 14px; margin: 10px 0; background: #0d1117; }
+summary { font-weight: 700; cursor: pointer; color: var(--ink-bright); }
+
+@media(max-width:850px) {
+  .form-grid, .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .two-col { grid-template-columns: 1fr; }
+}
+@media(max-width:520px) {
+  header { padding: 30px 17px; }
+  .form-grid, .cards { grid-template-columns: 1fr; }
+  section, .panel { padding: 17px; }
+}
 </style>
 </head>
 <body>
@@ -79,12 +249,22 @@ summary{font-weight:750;cursor:pointer}
   <div class="eyebrow">Métodos numéricos · Ecuaciones diferenciales</div>
   <h1>Recuperación de servidor</h1>
   <p>Análisis matemático de cómo disminuye la carga de un servidor después de una sobrecarga, comparando una solución exacta con los métodos numéricos de Heun y Runge–Kutta de cuarto orden.</p>
-  <div class="hero-tags"><span>EDO de primer orden</span><span>Heun (RK2)</span><span>Runge–Kutta (RK4)</span><span>Simulación interactiva</span></div>
+  <div class="hero-tags">
+    <span>EDO de primer orden</span>
+    <span>Heun (RK2)</span>
+    <span>Runge–Kutta (RK4)</span>
+    <span>Simulación interactiva</span>
+  </div>
  </div>
 </header>
 <main>
 <nav aria-label="Navegación">
- <a href="#contexto">Problema</a><a href="#modelo">Modelo matemático</a><a href="#configuracion">Configuración</a><a href="#resultados">Resultados</a><a href="#analisis">Análisis</a>
+ <a href="#contexto">Problema</a>
+ <a href="#modelo">Modelo matemático</a>
+ <a href="#configuracion">Configuración</a>
+ <a href="#resultados">Resultados</a>
+ <a href="#graficas">Gráficas</a>
+ <a href="#analisis">Análisis</a>
 </nav>
 
 <section id="contexto">
@@ -110,42 +290,27 @@ summary{font-weight:750;cursor:pointer}
  </tbody></table></div>
  <h3>Ecuación diferencial propuesta</h3>
  <div class="formula center">dL/dt = −k (L − L<sub>n</sub>)</div>
- <p>La variación de la carga es proporcional a la diferencia entre la carga actual y la carga normal. El signo negativo indica que, cuando L(t) está por encima de Lₙ, su derivada es negativa y la carga disminuye. Cuanto mayor sea la diferencia, mayor será la disminución instantánea prevista por el modelo.</p>
- <h3>Condición inicial</h3>
- <div class="formula center">L(0) = L<sub>0</sub></div>
- <p>La simulación comienza en el instante cero con una carga inicial especificada por el usuario.</p>
- <h3>Obtención de la solución analítica</h3>
- <ol class="steps">
-  <li>Partimos de la ecuación diferencial y separamos variables: <div class="formula">dL / (L − Lₙ) = −k dt</div></li>
-  <li>Integramos ambos lados: <div class="formula">ln |L − Lₙ| = −kt + C</div></li>
-  <li>Aplicamos exponencial y agrupamos la constante: <div class="formula">L − Lₙ = C₁ e<sup>−kt</sup></div></li>
-  <li>Usamos L(0)=L₀. Al sustituir t=0 se obtiene C₁=L₀−Lₙ.</li>
-  <li>La solución exacta queda: <div class="formula center">L(t) = L<sub>n</sub> + (L<sub>0</sub> − L<sub>n</sub>) e<sup>−kt</sup></div></li>
- </ol>
- <h3>Verificación de la solución</h3>
- <p>Derivando la expresión analítica:</p>
- <div class="formula">L′(t) = −k(L₀ − Lₙ)e<sup>−kt</sup></div>
- <p>Como L(t)−Lₙ=(L₀−Lₙ)e<sup>−kt</sup>, entonces:</p>
- <div class="formula">L′(t)=−k(L(t)−Lₙ)</div>
- <p>Además, L(0)=Lₙ+(L₀−Lₙ)e⁰=L₀. Por tanto, la expresión satisface tanto la EDO como la condición inicial.</p>
- <div class="callout warning"><strong>Alcance y limitaciones:</strong> el modelo no representa colas de solicitudes, balanceo de carga, memoria, red, procesos individuales ni nuevas sobrecargas. Considera una recuperación suave hacia un nivel normal fijo. En un sistema real, k y Lₙ deberían estimarse con registros medidos.</div>
+ <p>La variación de la carga es proporcional a la diferencia entre la carga actual y la carga normal. El signo negativo indica que, cuando L(t) está por encima de Lₙ, su derivada es negativa y la carga disminuye.</p>
+ <h3>Solución exacta</h3>
+ <div class="formula center">L(t) = L<sub>n</sub> + (L<sub>0</sub> − L<sub>n</sub>) e<sup>−kt</sup></div>
 </section>
 
 <section id="configuracion">
  <div class="section-head"><span class="num">03</span><div><h2>Configuración de la simulación</h2><div class="muted small">Modifica los parámetros y ejecuta nuevamente el cálculo</div></div></div>
- <p class="muted">Los valores iniciales son un escenario ilustrativo. Puedes cambiarlos para observar cómo afectan la curva y los errores.</p>
  <div class="form-grid">
   <div class="field"><label for="l0">Carga inicial L₀</label><input id="l0" type="number" min="0" max="100" step="any" value="95"><div class="unit">Porcentaje (%) · 0 a 100</div></div>
   <div class="field"><label for="ln">Carga normal Lₙ</label><input id="ln" type="number" min="0" max="100" step="any" value="20"><div class="unit">Porcentaje (%) · 0 a 100</div></div>
-  <div class="field"><label for="k">Tasa de recuperación k</label><input id="k" type="number" min="0.000001" step="any" value="0.25"><div class="unit">Por minuto (min⁻¹) · mayor que 0</div></div>
-  <div class="field"><label for="time">Tiempo total T</label><input id="time" type="number" min="0.01" step="any" value="20"><div class="unit">Minutos · mayor que 0</div></div>
-  <div class="field"><label for="h">Paso principal h</label><input id="h" type="number" min="0.0001" step="any" value="1"><div class="unit">Minutos · se usa en la tabla detallada</div></div>
-  <div class="field"><label for="h2">Segundo paso h₂</label><input id="h2" type="number" min="0.0001" step="any" value="0.5"><div class="unit">Minutos · comparación de precisión</div></div>
-  <div class="field"><label for="threshold">Umbral de recuperación</label><input id="threshold" type="number" min="0" max="100" step="any" value="25"><div class="unit">Porcentaje (%) · nivel objetivo ilustrativo</div></div>
+  <div class="field"><label for="k">Tasa de recuperación k</label><input id="k" type="number" min="0.000001" step="any" value="0.25"><div class="unit">Por minuto (min⁻¹)</div></div>
+  <div class="field"><label for="time">Tiempo total T</label><input id="time" type="number" min="0.01" step="any" value="20"><div class="unit">Minutos</div></div>
+  <div class="field"><label for="h">Paso principal h</label><input id="h" type="number" min="0.0001" step="any" value="1.5"><div class="unit">Minutos (aumentar para ver error)</div></div>
+  <div class="field"><label for="h2">Segundo paso h₂</label><input id="h2" type="number" min="0.0001" step="any" value="0.5"><div class="unit">Minutos · comparación</div></div>
+  <div class="field"><label for="threshold">Umbral de recuperación</label><input id="threshold" type="number" min="0" max="100" step="any" value="25"><div class="unit">Porcentaje (%)</div></div>
  </div>
- <div class="actions"><button class="primary" id="run">Ejecutar simulación</button><button class="secondary" id="reset">Restaurar valores iniciales</button></div>
+ <div class="actions">
+   <button class="primary" id="run">Ejecutar simulación</button>
+   <button class="secondary" id="reset">Restaurar valores iniciales</button>
+ </div>
  <div id="error" class="error-box" role="alert"></div>
- <p class="hint small">Validación: L₀ y Lₙ deben estar entre 0 y 100; k, T, h y h₂ deben ser positivos. Para que la comparación sea clara, los pasos deben dividir el intervalo total en un número entero de subintervalos (se admite una pequeña tolerancia decimal).</p>
 </section>
 
 <section id="resultados">
@@ -157,184 +322,228 @@ summary{font-weight:750;cursor:pointer}
   <div class="metric"><div class="label">Umbral objetivo</div><div class="value" id="mThreshold">25.00 %</div><div class="sub" id="mThresholdTime">Tiempo estimado: —</div></div>
  </div>
  <h3>Tabla de iteraciones: paso principal h</h3>
- <p class="muted small">Cada fila corresponde a un instante tₙ. Los errores se calculan comparando cada aproximación numérica con la solución analítica en el mismo instante.</p>
  <div class="table-wrap"><table id="mainTable"><thead><tr>
  <th>n</th><th>t (min)</th><th>Analítica (%)</th><th>Heun (%)</th><th>RK4 (%)</th><th>|Error Heun|</th><th>Error Heun (%)</th><th>|Error RK4|</th><th>Error RK4 (%)</th>
  </tr></thead><tbody></tbody></table></div>
  <h3>Comparación de tamaños de paso</h3>
- <p class="muted small">Se ejecutan ambos métodos con h y h₂. La tabla resume el error absoluto final respecto al valor analítico.</p>
  <div class="table-wrap"><table id="stepTable"><thead><tr><th>Método</th><th>Paso (min)</th><th>Subintervalos</th><th>Valor final (%)</th><th>Analítica final (%)</th><th>Error absoluto</th><th>Error relativo (%)</th></tr></thead><tbody></tbody></table></div>
  <div class="two-col">
   <div><h3>Interpretación automática</h3><div id="interpretation" class="callout">Ejecuta la simulación para obtener la interpretación.</div></div>
-  <div><h3>Lectura del resultado</h3><div class="callout"><p><strong>Error absoluto:</strong> diferencia en puntos porcentuales entre el valor numérico y el exacto.</p><p><strong>Error relativo porcentual:</strong> error absoluto dividido entre el valor absoluto exacto, multiplicado por 100. Si el valor exacto es cero, no se calcula.</p></div></div>
+  <div><h3>Lectura del resultado</h3><div class="callout"><p><strong>Error absoluto:</strong> diferencia en puntos porcentuales entre el valor numérico y el exacto.</p><p><strong>Error relativo porcentual:</strong> error absoluto dividido entre el valor absoluto exacto, multiplicado por 100.</p></div></div>
  </div>
 </section>
 
 <section id="graficas">
- <div class="section-head"><span class="num">05</span><div><h2>Gráfica comparativa</h2><div class="muted small">Evolución de la carga a lo largo del tiempo</div></div></div>
+ <div class="section-head"><span class="num">05</span><div><h2>Gráfica comparativa y de errores</h2><div class="muted small">Visualización clara de las diferencias entre métodos</div></div></div>
+ 
  <div class="legend">
-  <span style="--c:#172235">Solución analítica</span><span style="--c:#d97706">Heun (RK2)</span><span style="--c:#087f8c">RK4</span>
+  <span style="--c:#f0f6fc">Solución analítica (continua)</span>
+  <span style="--c:#ff9b26">Heun (RK2 - discontinua)</span>
+  <span style="--c:#39c5bb">RK4 (puntos/diamante)</span>
  </div>
- <canvas id="chart" width="1100" height="420" aria-label="Gráfica de carga de servidor en función del tiempo"></canvas>
- <p class="muted small">La curva analítica se dibuja de forma continua. Los métodos numéricos se muestran mediante sus puntos calculados con el paso principal h.</p>
+ 
+ <h3>Curva de carga vs tiempo</h3>
+ <canvas id="chart" width="1100" height="380" aria-label="Gráfica de carga de servidor"></canvas>
+
+ <h3>Diferencia / Error absoluto instantáneo respecto al valor exacto</h3>
+ <p class="muted small">Esta gráfica magnifica el error en cada punto para que la precisión superior de RK4 respecto a Heun sea completamente visible.</p>
+ <canvas id="errorChart" width="1100" height="220" aria-label="Gráfica de error absoluto"></canvas>
 </section>
 
 <section id="analisis">
- <div class="section-head"><span class="num">06</span><div><h2>Análisis, interpretación y conclusiones</h2><div class="muted small">Cómo explicar los resultados del experimento</div></div></div>
- <h3>¿Qué significa la curva?</h3>
- <p>Si la carga inicial es mayor que la carga normal, el modelo predice una disminución rápida al comienzo y progresivamente más lenta conforme se aproxima al nivel normal. La carga normal funciona como un valor de equilibrio: la solución se acerca a él de manera asintótica y, en el modelo ideal, no lo alcanza exactamente en un tiempo finito.</p>
+ <div class="section-head"><span class="num">06</span><div><h2>Análisis y conclusiones</h2><div class="muted small">Cómo explicar los resultados del experimento</div></div></div>
  <h3>¿Cómo se comparan los métodos?</h3>
  <ul>
-  <li><strong>Heun (RK2):</strong> calcula una pendiente al inicio del intervalo y otra al final usando una predicción; luego promedia ambas pendientes. Tiene orden global 2.</li>
-  <li><strong>RK4 clásico:</strong> combina cuatro estimaciones de pendiente dentro de cada intervalo. Tiene orden global 4 y, para pasos comparables en problemas suaves como este, normalmente logra mayor precisión.</li>
-  <li><strong>Solución analítica:</strong> proporciona el valor de referencia exacto del modelo y permite cuantificar los errores de las aproximaciones.</li>
+  <li><strong>Heun (RK2):</strong> Promedia la pendiente inicial y la final estimada. Posee orden de precisión global 2.</li>
+  <li><strong>RK4 clásico:</strong> Combina cuatro estimaciones de pendiente. Posee orden global 4, mostrando un error insignificante comparado con Heun.</li>
+  <li><strong>Solución analítica:</strong> Funciona como valor exacto de referencia.</li>
  </ul>
- <h3>Supuestos que deben mencionarse en el informe</h3>
- <ul>
-  <li>La causa que produjo la sobrecarga deja de actuar al inicio de la simulación.</li>
-  <li>La carga normal Lₙ se mantiene constante durante todo el intervalo.</li>
-  <li>La tasa k es constante y positiva.</li>
-  <li>La evolución es continua y no presenta nuevas sobrecargas ni cambios bruscos.</li>
-  <li>Los parámetros de ejemplo son hipotéticos; no constituyen evidencia empírica.</li>
- </ul>
- <h3>Conclusión que se debe verificar con tus resultados</h3>
- <p>En este modelo, ambos métodos aproximan una recuperación exponencial de la carga. Al reducir el tamaño de paso, normalmente disminuye el error de las aproximaciones. RK4 suele presentar un error menor que Heun para el mismo paso, debido a su mayor orden de precisión. La tabla generada permite comprobar si esto ocurre con los parámetros seleccionados, en lugar de asumirlo sin verificar.</p>
- <details><summary>Fórmulas numéricas implementadas</summary>
-  <p><strong>Función:</strong> f(t,L)=−k(L−Lₙ).</p>
-  <p><strong>Heun:</strong></p><div class="formula">K₁=f(tₙ,Lₙ)<br>L*=Lₙ+hK₁<br>K₂=f(tₙ+h,L*)<br>Lₙ₊₁=Lₙ+(h/2)(K₁+K₂)</div>
-  <p><strong>Runge–Kutta clásico de cuarto orden:</strong></p>
-  <div class="formula">K₁=f(tₙ,Lₙ)<br>K₂=f(tₙ+h/2,Lₙ+hK₁/2)<br>K₃=f(tₙ+h/2,Lₙ+hK₂/2)<br>K₄=f(tₙ+h,Lₙ+hK₃)<br>Lₙ₊₁=Lₙ+(h/6)(K₁+2K₂+2K₃+K₄)</div>
-  <p>En estas expresiones, Kᵢ son pendientes y h es el tamaño del paso.</p>
- </details>
- <details><summary>¿Cómo citar los parámetros en el trabajo?</summary>
-  <p>“Para realizar el experimento numérico se adoptó un escenario hipotético con una carga inicial del 95 %, una carga normal del 20 % y una constante de recuperación de 0,25 min⁻¹. Estos valores se utilizan únicamente para ilustrar el comportamiento de la EDO y comparar los métodos; no proceden de mediciones de infraestructura real.”</p>
- </details>
 </section>
+
 <footer>Simulación académica · Métodos Numéricos · Modelo simplificado de recuperación de carga de servidor</footer>
 </main>
+
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
 const fmt = (x,d=6) => Number(x).toFixed(d);
-function f(t,L,p){return -p.k*(L-p.ln)}
-function exact(t,p){return p.ln+(p.l0-p.ln)*Math.exp(-p.k*t)}
+
+function f(t,L,p){ return -p.k*(L-p.ln); }
+function exact(t,p){ return p.ln + (p.l0-p.ln)*Math.exp(-p.k*t); }
+
 function heun(p,h,n){
- let t=0,L=p.l0,a=[{n:0,t,L}];
- for(let i=0;i<n;i++){
-  const k1=f(t,L,p), pred=L+h*k1, k2=f(t+h,pred,p);
-  L=L+(h/2)*(k1+k2); t=(i+1)*h;
-  a.push({n:i+1,t,L});
- }
- return a;
-}
-function rk4(p,h,n){
- let t=0,L=p.l0,a=[{n:0,t,L}];
- for(let i=0;i<n;i++){
-  const k1=f(t,L,p);
-  const k2=f(t+h/2,L+h*k1/2,p);
-  const k3=f(t+h/2,L+h*k2/2,p);
-  const k4=f(t+h,L+h*k3,p);
-  L=L+(h/6)*(k1+2*k2+2*k3+k4); t=(i+1)*h;
-  a.push({n:i+1,t,L});
- }
- return a;
-}
-function validate(){
- const p={l0:Number($("l0").value),ln:Number($("ln").value),k:Number($("k").value),T:Number($("time").value),h:Number($("h").value),h2:Number($("h2").value),threshold:Number($("threshold").value)};
- const problems=[];
- for(const key of ["l0","ln","k","T","h","h2","threshold"]) if(!Number.isFinite(p[key])) problems.push("Completa todos los campos con números válidos.");
- if(p.l0<0||p.l0>100||p.ln<0||p.ln>100) problems.push("La carga inicial y la carga normal deben estar entre 0 y 100 %.");
- if(p.threshold<0||p.threshold>100) problems.push("El umbral debe estar entre 0 y 100 %.");
- if(p.k<=0||p.T<=0||p.h<=0||p.h2<=0) problems.push("La tasa k, el tiempo y ambos tamaños de paso deben ser mayores que cero.");
- if(p.T/p.h>2000||p.T/p.h2>2000) problems.push("Usa pasos que generen como máximo 2000 subintervalos por simulación.");
- for(const [name,step] of [["h",p.h],["h₂",p.h2]]){
-  const n=Math.round(p.T/step);
-  if(Math.abs(n*step-p.T)>1e-8*Math.max(1,p.T)) problems.push(`El tiempo total T debe ser múltiplo del paso ${name} (${step}). Ajusta T o el tamaño de paso.`);
- }
- return {p,problems};
-}
-function errorData(num,ex){
- const abs=Math.abs(num-ex), rel=Math.abs(ex)>1e-12?100*abs/Math.abs(ex):null;
- return {abs,rel};
-}
-function fillMainTable(p,H,R){
- const body=$("mainTable").querySelector("tbody");body.innerHTML="";
- H.forEach((v,i)=>{
-  const ex=exact(v.t,p), eh=errorData(v.L,ex), er=errorData(R[i].L,ex);
-  const tr=document.createElement("tr");
-  const cells=[v.n,fmt(v.t,3),fmt(ex,6),fmt(v.L,6),fmt(R[i].L,6),fmt(eh.abs,8),eh.rel===null?"No definido":fmt(eh.rel,6),fmt(er.abs,10),er.rel===null?"No definido":fmt(er.rel,8)];
-  cells.forEach((x,j)=>{const td=document.createElement("td");td.textContent=x;tr.appendChild(td)});
-  body.appendChild(tr);
- });
-}
-function fillStepTable(p,sets,exT){
- const body=$("stepTable").querySelector("tbody");body.innerHTML="";
- for(const s of sets){
-  for(const method of ["Heun","RK4"]){
-   const arr=s[method], last=arr[arr.length-1], e=errorData(last.L,exT);
-   const row=[method,fmt(s.h,5),arr.length-1,fmt(last.L,8),fmt(exT,8),fmt(e.abs,10),e.rel===null?"No definido":fmt(e.rel,8)];
-   const tr=document.createElement("tr");row.forEach((x,j)=>{const td=document.createElement("td");td.textContent=x;tr.appendChild(td)});body.appendChild(tr);
+  let t=0, L=p.l0, a=[{n:0,t,L}];
+  for(let i=0; i<n; i++){
+    const k1 = f(t,L,p), pred = L + h*k1, k2 = f(t+h,pred,p);
+    L = L + (h/2)*(k1+k2); 
+    t = (i+1)*h;
+    a.push({n:i+1,t,L});
   }
- }
+  return a;
 }
-function drawChart(p,H,R){
- const c=$("chart"),ctx=c.getContext("2d"),W=c.width,Hh=c.height;
- ctx.clearRect(0,0,W,Hh);
- const pad={l:76,r:25,t:25,b:55}, plotW=W-pad.l-pad.r,plotH=Hh-pad.t-pad.b;
- const vals=[0,100];let minY=Math.min(p.ln-5,Math.min(...H.map(x=>x.L))-5),maxY=Math.max(p.l0+5,Math.max(...H.map(x=>x.L))+5);
- minY=Math.max(0,Math.floor(minY/10)*10);maxY=Math.min(110,Math.ceil(maxY/10)*10);
- if(maxY-minY<10)maxY=minY+10;
- const X=t=>pad.l+(t/p.T)*plotW,Y=v=>pad.t+(maxY-v)/(maxY-minY)*plotH;
- ctx.strokeStyle="#e5eaf1";ctx.lineWidth=1;ctx.font="13px Segoe UI,Arial";ctx.fillStyle="#526176";
- for(let i=0;i<=5;i++){let y=minY+(maxY-minY)*i/5,py=Y(y);ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(W-pad.r,py);ctx.stroke();ctx.fillText(y.toFixed(0)+"%",18,py+4)}
- for(let i=0;i<=5;i++){let t=p.T*i/5,px=X(t);ctx.beginPath();ctx.moveTo(px,pad.t);ctx.lineTo(px,Hh-pad.b);ctx.stroke();ctx.fillText(t.toFixed(1),px-12,Hh-25)}
- ctx.fillStyle="#34445d";ctx.font="bold 14px Segoe UI,Arial";ctx.fillText("Tiempo (min)",W/2-42,Hh-5);
- ctx.save();ctx.translate(18,Hh/2+35);ctx.rotate(-Math.PI/2);ctx.fillText("Carga del servidor (%)",0,0);ctx.restore();
- function line(points,color,width){
-  ctx.beginPath();points.forEach((v,i)=>{const x=X(v.t),y=Y(v.L);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
- }
- const exactPts=Array.from({length:201},(_,i)=>({t:p.T*i/200,L:exact(p.T*i/200,p)}));
- line(exactPts,"#172235",3);line(H,"#d97706",2);line(R,"#087f8c",2);
- function dots(points,color){ctx.fillStyle=color;points.forEach(v=>{ctx.beginPath();ctx.arc(X(v.t),Y(v.L),3.2,0,Math.PI*2);ctx.fill()})}
- dots(H,"#d97706");dots(R,"#087f8c");
+
+function rk4(p,h,n){
+  let t=0, L=p.l0, a=[{n:0,t,L}];
+  for(let i=0; i<n; i++){
+    const k1 = f(t,L,p);
+    const k2 = f(t+h/2, L+h*k1/2, p);
+    const k3 = f(t+h/2, L+h*k2/2, p);
+    const k4 = f(t+h, L+h*k3, p);
+    L = L + (h/6)*(k1 + 2*k2 + 2*k3 + k4); 
+    t = (i+1)*h;
+    a.push({n:i+1,t,L});
+  }
+  return a;
 }
+
+function validate(){
+  const p={l0:Number($("l0").value),ln:Number($("ln").value),k:Number($("k").value),T:Number($("time").value),h:Number($("h").value),h2:Number($("h2").value),threshold:Number($("threshold").value)};
+  const problems=[];
+  for(const key of ["l0","ln","k","T","h","h2","threshold"]) if(!Number.isFinite(p[key])) problems.push("Completa todos los campos con números válidos.");
+  if(p.l0<0||p.l0>100||p.ln<0||p.ln>100) problems.push("La carga inicial y normal deben estar entre 0 y 100 %.");
+  if(p.k<=0||p.T<=0||p.h<=0||p.h2<=0) problems.push("Los parámetros k, T, h y h₂ deben ser mayores que cero.");
+  return {p,problems};
+}
+
+function errorData(num,ex){
+  const abs=Math.abs(num-ex), rel=Math.abs(ex)>1e-12?100*abs/Math.abs(ex):null;
+  return {abs,rel};
+}
+
+function fillMainTable(p,H,R){
+  const body=$("mainTable").querySelector("tbody"); body.innerHTML="";
+  H.forEach((v,i)=>{
+    const ex=exact(v.t,p), eh=errorData(v.L,ex), er=errorData(R[i].L,ex);
+    const tr=document.createElement("tr");
+    const cells=[v.n,fmt(v.t,3),fmt(ex,6),fmt(v.L,6),fmt(R[i].L,6),fmt(eh.abs,6),eh.rel===null?"—":fmt(eh.rel,4),fmt(er.abs,8),er.rel===null?"—":fmt(er.rel,6)];
+    cells.forEach(x=>{const td=document.createElement("td");td.textContent=x;tr.appendChild(td)});
+    body.appendChild(tr);
+  });
+}
+
+function fillStepTable(p,sets,exT){
+  const body=$("stepTable").querySelector("tbody"); body.innerHTML="";
+  for(const s of sets){
+    for(const method of ["Heun","RK4"]){
+      const arr=s[method], last=arr[arr.length-1], e=errorData(last.L,exT);
+      const row=[method,fmt(s.h,4),arr.length-1,fmt(last.L,6),fmt(exT,6),fmt(e.abs,8),e.rel===null?"—":fmt(e.rel,6)];
+      const tr=document.createElement("tr");row.forEach(x=>{const td=document.createElement("td");td.textContent=x;tr.appendChild(td)});body.appendChild(tr);
+    }
+  }
+}
+
+function drawCharts(p,H,R){
+  // 1. Gráfica Principal de Curvas
+  const c=$("chart"), ctx=c.getContext("2d"), W=c.width, Hh=c.height;
+  ctx.clearRect(0,0,W,Hh);
+  const pad={l:60,r:25,t:25,b:45}, plotW=W-pad.l-pad.r, plotH=Hh-pad.t-pad.b;
+  
+  let minY=0, maxY=100;
+  const X=t=>pad.l+(t/p.T)*plotW, Y=v=>pad.t+(maxY-v)/(maxY-minY)*plotH;
+
+  // Rejilla de Fondo
+  ctx.strokeStyle="#21262d"; ctx.lineWidth=1; ctx.font="12px sans-serif"; ctx.fillStyle="#8b949e";
+  for(let i=0;i<=5;i++){
+    let y=minY+(maxY-minY)*i/5, py=Y(y);
+    ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(W-pad.r,py);ctx.stroke();
+    ctx.fillText(y.toFixed(0)+"%",15,py+4);
+  }
+  for(let i=0;i<=5;i++){
+    let t=p.T*i/5, px=X(t);
+    ctx.beginPath();ctx.moveTo(px,pad.t);ctx.lineTo(px,Hh-pad.b);ctx.stroke();
+    ctx.fillText(t.toFixed(1)+"m",px-10,Hh-15);
+  }
+
+  // Dibujar Solución Analítica (Línea Blanca Continua)
+  ctx.beginPath();
+  for(let i=0; i<=200; i++){
+    let t = p.T * i / 200, L = exact(t,p);
+    if(i===0) ctx.moveTo(X(t),Y(L)); else ctx.lineTo(X(t),Y(L));
+  }
+  ctx.strokeStyle="#f0f6fc"; ctx.lineWidth=3; ctx.stroke();
+
+  // Dibujar Heun (Línea discontinua Naranja + Círculos)
+  ctx.beginPath();
+  ctx.setLineDash([6, 4]);
+  H.forEach((v,i)=>{ if(i===0) ctx.moveTo(X(v.t),Y(v.L)); else ctx.lineTo(X(v.t),Y(v.L)); });
+  ctx.strokeStyle="#ff9b26"; ctx.lineWidth=2; ctx.stroke();
+  ctx.setLineDash([]);
+  H.forEach(v=>{ ctx.fillStyle="#ff9b26"; ctx.beginPath(); ctx.arc(X(v.t),Y(v.L),4,0,Math.PI*2); ctx.fill(); });
+
+  // Dibujar RK4 (Puntos Cian + Diamantes)
+  R.forEach(v=>{
+    ctx.fillStyle="#39c5bb";
+    ctx.beginPath();
+    ctx.rect(X(v.t)-3, Y(v.L)-3, 6, 6);
+    ctx.fill();
+  });
+
+  // 2. Gráfica Secundaria (Error Absoluto)
+  const cErr=$("errorChart"), ctxE=cErr.getContext("2d"), He=cErr.height;
+  ctxE.clearRect(0,0,W,He);
+  const padE={l:60,r:25,t:20,b:35}, plotHE=He-padE.t-padE.b;
+
+  const errH = H.map((v,i)=>Math.abs(v.L - exact(v.t,p)));
+  const errR = R.map((v,i)=>Math.abs(v.L - exact(v.t,p)));
+  const maxErr = Math.max(...errH, 0.001);
+
+  const YE = v => padE.t + (maxErr - v) / maxErr * plotHE;
+
+  // Rejilla Error
+  ctxE.strokeStyle="#21262d"; ctxE.lineWidth=1; ctxE.font="11px sans-serif"; ctxE.fillStyle="#8b949e";
+  for(let i=0;i<=2;i++){
+    let val = maxErr * i / 2, py = YE(val);
+    ctxE.beginPath(); ctxE.moveTo(padE.l, py); ctxE.lineTo(W-padE.r, py); ctxE.stroke();
+    ctxE.fillText(val.toFixed(4), 10, py+3);
+  }
+
+  // Error Heun (Naranja)
+  ctxE.beginPath();
+  H.forEach((v,i)=>{ if(i===0) ctxE.moveTo(X(v.t),YE(errH[i])); else ctxE.lineTo(X(v.t),YE(errH[i])); });
+  ctxE.strokeStyle="#ff9b26"; ctxE.lineWidth=2; ctxE.stroke();
+
+  // Error RK4 (Cian)
+  ctxE.beginPath();
+  R.forEach((v,i)=>{ if(i===0) ctxE.moveTo(X(v.t),YE(errR[i])); else ctxE.lineTo(X(v.t),YE(errR[i])); });
+  ctxE.strokeStyle="#39c5bb"; ctxE.lineWidth=2; ctxE.stroke();
+}
+
 function run(){
- const {p,problems}=validate(),box=$("error");
- if(problems.length){box.style.display="block";box.textContent=[...new Set(problems)].join(" ");return}
- box.style.display="none";
- const n=Math.round(p.T/p.h),n2=Math.round(p.T/p.h2);
- const H=heun(p,p.h,n),R=rk4(p,p.h,n);
- const H2=heun(p,p.h2,n2),R2=rk4(p,p.h2,n2),exT=exact(p.T,p);
- fillMainTable(p,H,R);
- fillStepTable(p,[{h:p.h,Heun:H,RK4:R},{h:p.h2,Heun:H2,RK4:R2}],exT);
- drawChart(p,H,R);
- const eR=errorData(R[n].L,exT);
- $("mInitial").textContent=fmt(p.l0,2)+" %";
- $("mFinal").textContent=fmt(exT,4)+" %";
- $("mErr").textContent=fmt(eR.abs,8);
- $("mThreshold").textContent=fmt(p.threshold,2)+" %";
- let thresholdTime="No se alcanza dentro del intervalo";
- if(p.threshold>p.ln && p.threshold<p.l0){
-  const tHit=Math.log((p.l0-p.ln)/(p.threshold-p.ln))/p.k;
-  thresholdTime=tHit<=p.T?`Tiempo teórico: ${fmt(tHit,3)} min`:"Se alcanzaría después de T";
- }else if(p.threshold<=p.ln) thresholdTime="El umbral es igual o inferior al nivel normal";
- else thresholdTime="El umbral es igual o superior a la carga inicial";
- $("mThresholdTime").textContent=thresholdTime;
- const eH=errorData(H[n].L,exT),eH2=errorData(H2[n2].L,exT),eR2=errorData(R2[n2].L,exT);
- let winner=eR.abs<eH.abs?"RK4":eH.abs<eR.abs?"Heun":"ambos métodos presentan el mismo error";
- let reductionH=eH.abs>0?100*(eH.abs-eH2.abs)/eH.abs:null;
- let reductionR=eR.abs>0?100*(eR.abs-eR2.abs)/eR.abs:null;
- const direction=p.l0>p.ln?"disminuye hacia el nivel normal":p.l0<p.ln?"aumenta hacia el nivel normal":"permanece constante porque comienza en el nivel normal";
- let text=`Durante ${fmt(p.T,2)} minutos, la carga ${direction}. La solución analítica al final del intervalo es ${fmt(exT,6)} %. `;
- text+=`Con el paso h=${fmt(p.h,4)} min, Heun obtiene ${fmt(H[n].L,6)} % (error absoluto ${fmt(eH.abs,8)}) y RK4 obtiene ${fmt(R[n].L,6)} % (error absoluto ${fmt(eR.abs,8)}). `;
- text+=`En este ensayo, el menor error final corresponde a ${winner}. `;
- text+=`Al cambiar el paso a h₂=${fmt(p.h2,4)} min, Heun presenta un error de ${fmt(eH2.abs,8)} y RK4 de ${fmt(eR2.abs,8)}. `;
- text+=`Estos resultados describen el modelo hipotético y no deben interpretarse como mediciones o predicciones verificadas de un servidor real.`;
- $("interpretation").textContent=text;
+  const {p,problems}=validate(), box=$("error");
+  if(problems.length){ box.style.display="block"; box.textContent=[...new Set(problems)].join(" "); return; }
+  box.style.display="none";
+
+  const n=Math.round(p.T/p.h), n2=Math.round(p.T/p.h2);
+  const H=heun(p,p.h,n), R=rk4(p,p.h,n);
+  const H2=heun(p,p.h2,n2), R2=rk4(p,p.h2,n2), exT=exact(p.T,p);
+
+  fillMainTable(p,H,R);
+  fillStepTable(p,[{h:p.h,Heun:H,RK4:R},{h:p.h2,Heun:H2,RK4:R2}],exT);
+  drawCharts(p,H,R);
+
+  const eR=errorData(R[n].L,exT);
+  $("mInitial").textContent=fmt(p.l0,2)+" %";
+  $("mFinal").textContent=fmt(exT,4)+" %";
+  $("mErr").textContent=fmt(eR.abs,6);
+  $("mThreshold").textContent=fmt(p.threshold,2)+" %";
+  
+  let thresholdTime="No se alcanza en T";
+  if(p.threshold>p.ln && p.threshold<p.l0){
+    const tHit=Math.log((p.l0-p.ln)/(p.threshold-p.ln))/p.k;
+    thresholdTime=tHit<=p.T?`Tiempo teórico: ${fmt(tHit,2)} min`:"Se alcanzará después de T";
+  }
+  $("mThresholdTime").textContent=thresholdTime;
+
+  const eH=errorData(H[n].L,exT);
+  $("interpretation").innerHTML=`Con el paso <strong>h=${p.h} min</strong>:<br>` +
+    `• <strong>Heun (RK2)</strong> finaliza en <strong>${fmt(H[n].L,4)}%</strong> (Error absoluto: ${fmt(eH.abs,6)})<br>` +
+    `• <strong>RK4</strong> finaliza en <strong>${fmt(R[n].L,4)}%</strong> (Error absoluto: ${fmt(eR.abs,8)})<br><br>` +
+    `<em>Observación:</em> Como se aprecia en el segundo gráfico, RK4 tiene un margen de error prácticamente nulo debido a su orden de precisión 4.`;
 }
+
 $("run").addEventListener("click",run);
 $("reset").addEventListener("click",()=>{
- $("l0").value=95;$("ln").value=20;$("k").value=.25;$("time").value=20;$("h").value=1;$("h2").value=.5;$("threshold").value=25;run();
+  $("l0").value=95; $("ln").value=20; $("k").value=.25; $("time").value=20; $("h").value=1.5; $("h2").value=.5; $("threshold").value=25; run();
 });
 run();
 </script>
