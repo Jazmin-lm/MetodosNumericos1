@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deterioro mecánico | SIMTELE-RISK</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/deterioro.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header class="encabezado">
+    <div class="logo">SIMTELE-RISK</div>
+    <nav>
+        <a href="/">Inicio</a>
+        <a href="/deterioro" class="activo">Módulo 2</a>
+        <a href="/historial">Historial</a>
+    </nav>
+</header>
+
+<main class="contenedor">
+
+    <section class="introduccion">
+        <p class="etiqueta">MÓDULO 02</p>
+        <h1>Deterioro mecánico y mantenimiento</h1>
+        <p>
+            Simulación del comportamiento de un componente mecánico
+            hipotético y análisis de su deterioro progresivo.
+        </p>
+    </section>
+
+    <!-- ESCENARIOS -->
+    <section class="seccion">
+        <h2>1. Selección del escenario</h2>
+        <p class="descripcion">
+            Selecciona una condición para cargar sus valores iniciales.
+            También puedes modificarlos manualmente.
+        </p>
+
+        <div class="escenarios">
+            <button class="boton-escenario seleccionado"
+                    data-escenario="normal">
+                <span>01</span>
+                Normal
+            </button>
+
+            <button class="boton-escenario"
+                    data-escenario="estres">
+                <span>02</span>
+                Estrés
+            </button>
+
+            <button class="boton-escenario"
+                    data-escenario="mal">
+                <span>03</span>
+                Mal condicionado
+            </button>
+        </div>
+
+        <p id="descripcion-escenario" class="mensaje-escenario">
+            Condiciones habituales de deterioro.
+        </p>
+    </section>
+
+    <!-- MODELO DE DETERIORO -->
+    <section class="seccion">
+        <h2>2. Parámetros del modelo de deterioro</h2>
+
+        <div class="formula">
+            D(t) = D₀ + at + bt²
+        </div>
+
+        <div class="campos">
+            <div class="campo">
+                <label for="d0">Deterioro inicial (D₀)</label>
+                <input type="number" id="d0" value="5" step="any">
+            </div>
+
+            <div class="campo">
+                <label for="a">Tasa lineal (a)</label>
+                <input type="number" id="a" value="0.8" step="any">
+            </div>
+
+            <div class="campo">
+                <label for="b">Coeficiente cuadrático (b)</label>
+                <input type="number" id="b" value="0.04" step="any">
+            </div>
+
+            <div class="campo">
+                <label for="dlim">Umbral de inspección (Dlim)</label>
+                <input type="number" id="dlim" value="25" step="any">
+            </div>
+        </div>
+
+        <h3>Observaciones hipotéticas</h3>
+        <p class="descripcion">
+            Tiempos de observación utilizados para estudiar la
+            calibración de los parámetros.
+        </p>
+
+        <div class="campos">
+            <div class="campo">
+                <label for="t1">Tiempo 1 (meses)</label>
+                <input type="number" id="t1" value="1" step="any">
+            </div>
+
+            <div class="campo">
+                <label for="t2">Tiempo 2 (meses)</label>
+                <input type="number" id="t2" value="2" step="any">
+            </div>
+
+            <div class="campo">
+                <label for="t3">Tiempo 3 (meses)</label>
+                <input type="number" id="t3" value="3" step="any">
+            </div>
+        </div>
+
+        <button id="restablecer" class="boton-secundario">
+            Restablecer escenario
+        </button>
+    </section>
+
+    <!-- SISTEMA LINEAL -->
+    <section class="seccion">
+        <h2>3. Sistema de ecuaciones lineales</h2>
+
+        <p class="descripcion">
+            Sistema auxiliar utilizado en el ejercicio de métodos
+            numéricos desarrollado en el informe. Puedes editar
+            sus coeficientes y términos independientes.
+        </p>
+
+        <div class="formula">Ax = b</div>
+
+        <div class="matriz-contenedor">
+            <div>
+                <h3>Matriz A</h3>
+                <div class="matriz">
+                    <input class="coeficiente" type="number" value="4" step="any">
+                    <input class="coeficiente" type="number" value="1" step="any">
+                    <input class="coeficiente" type="number" value="1" step="any">
+
+                    <input class="coeficiente" type="number" value="1" step="any">
+                    <input class="coeficiente" type="number" value="5" step="any">
+                    <input class="coeficiente" type="number" value="1" step="any">
+
+                    <input class="coeficiente" type="number" value="1" step="any">
+                    <input class="coeficiente" type="number" value="1" step="any">
+                    <input class="coeficiente" type="number" value="6" step="any">
+                </div>
+            </div>
+
+            <div>
+                <h3>Vector b</h3>
+                <div class="vector">
+                    <input class="independiente" type="number" value="8" step="any">
+                    <input class="independiente" type="number" value="13" step="any">
+                    <input class="independiente" type="number" value="15" step="any">
+                </div>
+            </div>
+        </div>
+
+        <p class="nota">
+            Nota: esta matriz es independiente de los parámetros
+            del modelo de deterioro. Más adelante podremos incorporar
+            la calibración mediante observaciones.
+        </p>
+    </section>
+
+    <!-- CONFIGURACIÓN -->
+    <section class="seccion">
+        <h2>4. Configuración de los métodos numéricos</h2>
+
+        <div class="campos">
+            <div class="campo">
+                <label for="tolerancia">Tolerancia</label>
+                <input type="number" id="tolerancia"
+                       value="0.000001" step="any">
+            </div>
+
+            <div class="campo">
+                <label for="iteraciones">Máximo de iteraciones</label>
+                <input type="number" id="iteraciones" value="100">
+            </div>
+
+            <div class="campo">
+                <label for="x0">Valor inicial</label>
+                <input type="number" id="x0" value="0" step="any">
+            </div>
+        </div>
+
+        <p class="descripcion">
+            Métodos disponibles:
+            Jacobi, Gauss-Seidel, LU y gradiente conjugado.
+        </p>
+
+        <button id="ejecutar" class="boton-principal">
+            Ejecutar simulación
+        </button>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section class="seccion">
+        <h2>5. Resultados de la simulación</h2>
+
+        <div id="estado-resultados" class="estado">
+            Los resultados aparecerán aquí cuando conectemos
+            los métodos numéricos.
+        </div>
+
+        <div class="resultados">
+            <div class="resultado">
+                <span>Solución obtenida</span>
+                <strong id="solucion">Pendiente</strong>
+            </div>
+
+            <div class="resultado">
+                <span>Error numérico</span>
+                <strong id="error">Pendiente</strong>
+            </div>
+
+            <div class="resultado">
+                <span>Residual</span>
+                <strong id="residual">Pendiente</strong>
+            </div>
+        </div>
+
+        <h3>Gráfico de resultados</h3>
+        <div class="grafico">
+            <canvas id="grafico-deterioro"></canvas>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <p>SIMTELE-RISK | Proyecto académico de Métodos Numéricos</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/deterioro.js') }}"></script>
+
+</body>
+</html>
