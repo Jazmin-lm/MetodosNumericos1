@@ -1,6 +1,7 @@
-
-venv/
+.vscode/
+.env
 __pycache__/
 *.pyc
-.env
-.vscode/
+venv/
+.venv/
+migrations/__pycache__/python app.py

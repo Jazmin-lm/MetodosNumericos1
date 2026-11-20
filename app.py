@@ -1,7 +1,28 @@
-
 from flask import Flask, render_template, request, jsonify
+
+# Importación de métodos numéricos
 from backend.metodos.sistemas_lineales import ejecutar_metodos
+
+# Importación de configuración y extensiones
+from config import Config
+from extensions import db, migrate
+
 app = Flask(__name__)
+
+# Configuración de la aplicación
+app.config.from_object(Config)
+
+# Inicialización de PostgreSQL y migraciones
+db.init_app(app)
+migrate.init_app(app, db)
+
+# Importar modelos para que Flask-Migrate los detecte
+from models import *
+
+
+# ==============================
+# RUTAS PRINCIPALES
+# ==============================
 
 @app.route("/")
 def inicio():
@@ -32,6 +53,11 @@ def sensores():
 def historial():
     return render_template("historial.html")
 
+
+# ==============================
+# EJECUCIÓN DE MÉTODOS NUMÉRICOS
+# ==============================
+
 @app.route("/ejecutar-sistema", methods=["POST"])
 def ejecutar_sistema():
     try:
@@ -57,6 +83,32 @@ def ejecutar_sistema():
             "exito": False,
             "error": str(e)
         }), 400
+
+
+# ==============================
+# VERIFICACIÓN DE POSTGRESQL
+# ==============================
+
+@app.route("/verificar-db")
+def verificar_db():
+    try:
+        with db.engine.connect() as conexion:
+            conexion.exec_driver_sql("SELECT 1")
+
+        return jsonify({
+            "mensaje": "Conexión con PostgreSQL exitosa"
+        }), 200
+
+    except Exception as error:
+        return jsonify({
+            "mensaje": "Error al conectar con PostgreSQL",
+            "detalle": str(error)
+        }), 500
+
+
+# ==============================
+# INICIAR APLICACIÓN
+# ==============================
 
 if __name__ == "__main__":
     app.run(debug=True)
