@@ -4,242 +4,615 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deterioro mecánico | SIMTELE-RISK</title>
+
+    <title>Deterioro Mecánico | SIMTELE-RISK</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/deterioro.css') }}">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
-<header class="encabezado">
-    <div class="logo">SIMTELE-RISK</div>
-    <nav>
-        <a href="/">Inicio</a>
-        <a href="/deterioro" class="activo">Módulo 2</a>
-        <a href="/historial">Historial</a>
-    </nav>
-</header>
+<div class="aplicacion">
 
-<main class="contenedor">
+    <!-- BARRA LATERAL -->
+    <aside class="sidebar">
 
-    <section class="introduccion">
-        <p class="etiqueta">MÓDULO 02</p>
-        <h1>Deterioro mecánico y mantenimiento</h1>
-        <p>
-            Simulación del comportamiento de un componente mecánico
-            hipotético y análisis de su deterioro progresivo.
-        </p>
-    </section>
-
-    <!-- ESCENARIOS -->
-    <section class="seccion">
-        <h2>1. Selección del escenario</h2>
-        <p class="descripcion">
-            Selecciona una condición para cargar sus valores iniciales.
-            También puedes modificarlos manualmente.
-        </p>
-
-        <div class="escenarios">
-            <button class="boton-escenario seleccionado"
-                    data-escenario="normal">
-                <span>01</span>
-                Normal
-            </button>
-
-            <button class="boton-escenario"
-                    data-escenario="estres">
-                <span>02</span>
-                Estrés
-            </button>
-
-            <button class="boton-escenario"
-                    data-escenario="mal">
-                <span>03</span>
-                Mal condicionado
-            </button>
-        </div>
-
-        <p id="descripcion-escenario" class="mensaje-escenario">
-            Condiciones habituales de deterioro.
-        </p>
-    </section>
-
-    <!-- MODELO DE DETERIORO -->
-    <section class="seccion">
-        <h2>2. Parámetros del modelo de deterioro</h2>
-
-        <div class="formula">
-            D(t) = D₀ + at + bt²
-        </div>
-
-        <div class="campos">
-            <div class="campo">
-                <label for="d0">Deterioro inicial (D₀)</label>
-                <input type="number" id="d0" value="5" step="any">
-            </div>
-
-            <div class="campo">
-                <label for="a">Tasa lineal (a)</label>
-                <input type="number" id="a" value="0.8" step="any">
-            </div>
-
-            <div class="campo">
-                <label for="b">Coeficiente cuadrático (b)</label>
-                <input type="number" id="b" value="0.04" step="any">
-            </div>
-
-            <div class="campo">
-                <label for="dlim">Umbral de inspección (Dlim)</label>
-                <input type="number" id="dlim" value="25" step="any">
-            </div>
-        </div>
-
-        <h3>Observaciones hipotéticas</h3>
-        <p class="descripcion">
-            Tiempos de observación utilizados para estudiar la
-            calibración de los parámetros.
-        </p>
-
-        <div class="campos">
-            <div class="campo">
-                <label for="t1">Tiempo 1 (meses)</label>
-                <input type="number" id="t1" value="1" step="any">
-            </div>
-
-            <div class="campo">
-                <label for="t2">Tiempo 2 (meses)</label>
-                <input type="number" id="t2" value="2" step="any">
-            </div>
-
-            <div class="campo">
-                <label for="t3">Tiempo 3 (meses)</label>
-                <input type="number" id="t3" value="3" step="any">
-            </div>
-        </div>
-
-        <button id="restablecer" class="boton-secundario">
-            Restablecer escenario
-        </button>
-    </section>
-
-    <!-- SISTEMA LINEAL -->
-    <section class="seccion">
-        <h2>3. Sistema de ecuaciones lineales</h2>
-
-        <p class="descripcion">
-            Sistema auxiliar utilizado en el ejercicio de métodos
-            numéricos desarrollado en el informe. Puedes editar
-            sus coeficientes y términos independientes.
-        </p>
-
-        <div class="formula">Ax = b</div>
-
-        <div class="matriz-contenedor">
+        <div class="marca">
+            <div class="marca-icono">SR</div>
             <div>
-                <h3>Matriz A</h3>
-                <div class="matriz">
-                    <input class="coeficiente" type="number" value="4" step="any">
-                    <input class="coeficiente" type="number" value="1" step="any">
-                    <input class="coeficiente" type="number" value="1" step="any">
+                <h2>SIMTELE-RISK</h2>
+                <span>Sistema de simulación</span>
+            </div>
+        </div>
 
-                    <input class="coeficiente" type="number" value="1" step="any">
-                    <input class="coeficiente" type="number" value="5" step="any">
-                    <input class="coeficiente" type="number" value="1" step="any">
+        <div class="modulo-info">
+            <span>MÓDULO 02</span>
+            <h3>Deterioro mecánico</h3>
+            <p>Análisis y mantenimiento</p>
+        </div>
 
-                    <input class="coeficiente" type="number" value="1" step="any">
-                    <input class="coeficiente" type="number" value="1" step="any">
-                    <input class="coeficiente" type="number" value="6" step="any">
+        <nav class="menu">
+
+<nav class="menu">
+
+    <span class="menu-titulo">GENERAL</span>
+
+    <a href="#panel" class="menu-enlace activo">
+        <span>▦</span> Panel principal
+    </a>
+
+    <span class="menu-titulo">GESTIÓN</span>
+
+    <a href="#componentes" class="menu-enlace">
+        <span>⚙</span> Componentes mecánicos
+    </a>
+
+    <a href="#mediciones" class="menu-enlace">
+        <span>▤</span> Mediciones de deterioro
+    </a>
+
+    <span class="menu-titulo">MÉTODOS NUMÉRICOS</span>
+
+    <a href="#sistemas-lineales" class="menu-enlace">
+        <span>∑</span> Sistemas lineales
+    </a>
+
+    <a href="#raices" class="menu-enlace">
+        <span>√</span> Búsqueda de raíces
+    </a>
+
+    <a href="#integracion" class="menu-enlace">
+        <span>∫</span> Integración (opcional)
+    </a>
+
+    <span class="menu-titulo">ANÁLISIS</span>
+
+    <a href="#mantenimiento" class="menu-enlace">
+        <span>🔧</span> Mantenimiento
+    </a>
+
+    <a href="#historial" class="menu-enlace">
+        <span>◷</span> Historial
+    </a>
+
+</nav>
+
+        <div class="sidebar-pie">
+            <a href="/">← Volver al inicio</a>
+        </div>
+
+    </aside>
+
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="contenido">
+
+        <header class="barra-superior">
+            <div>
+                <span class="ruta">SIMTELE-RISK / Módulo 02</span>
+                <h1>Deterioro mecánico y mantenimiento</h1>
+            </div>
+
+            <div class="usuario">
+                <div class="usuario-icono">M2</div>
+                <div>
+                    <strong>Módulo 02</strong>
+                    <span>Simulación mecánica</span>
                 </div>
             </div>
+        </header>
 
-            <div>
-                <h3>Vector b</h3>
-                <div class="vector">
-                    <input class="independiente" type="number" value="8" step="any">
-                    <input class="independiente" type="number" value="13" step="any">
-                    <input class="independiente" type="number" value="15" step="any">
+
+        <!-- APARTADO 1: PANEL PRINCIPAL -->
+        <section id="panel" class="seccion">
+
+            <div class="bienvenida">
+                <div>
+                    <span class="etiqueta">PANEL DE CONTROL</span>
+                    <h2>Resumen del deterioro mecánico</h2>
+                    <p>
+                        Supervisa el comportamiento de los componentes,
+                        analiza sus mediciones y consulta su estado.
+                    </p>
                 </div>
+
+                <button class="boton-principal"
+                        onclick="mostrarSeccion('componentes')">
+                    + Registrar componente
+                </button>
             </div>
+
+
+            <!-- INDICADORES -->
+            <div class="indicadores">
+
+                <article class="tarjeta-indicador">
+                    <div class="indicador-superior">
+                        <span>Componentes registrados</span>
+                        <span class="indicador-icono azul">⚙</span>
+                    </div>
+
+                    <h3 id="total-componentes">0</h3>
+                    <p>Componentes en el sistema</p>
+                </article>
+
+
+                <article class="tarjeta-indicador">
+                    <div class="indicador-superior">
+                        <span>Mediciones realizadas</span>
+                        <span class="indicador-icono verde">▤</span>
+                    </div>
+
+                    <h3 id="total-mediciones">0</h3>
+                    <p>Registros de deterioro</p>
+                </article>
+
+
+                <article class="tarjeta-indicador">
+                    <div class="indicador-superior">
+                        <span>Requieren inspección</span>
+                        <span class="indicador-icono naranja">!</span>
+                    </div>
+
+                    <h3 id="requieren-inspeccion">0</h3>
+                    <p>Según el umbral establecido</p>
+                </article>
+
+
+                <article class="tarjeta-indicador">
+                    <div class="indicador-superior">
+                        <span>Última actualización</span>
+                        <span class="indicador-icono violeta">◷</span>
+                    </div>
+
+                    <h3 id="ultima-actualizacion">--</h3>
+                    <p>Fecha de última medición</p>
+                </article>
+
+            </div>
+
+
+            <!-- GRÁFICO Y ESTADO -->
+            <div class="panel-graficos">
+
+                <article class="tarjeta-panel grafico-panel">
+                    <div class="encabezado-tarjeta">
+                        <div>
+                            <h3>Evolución del deterioro</h3>
+                            <p>Comportamiento de las mediciones registradas</p>
+                        </div>
+
+                        <span class="etiqueta-suave">Histórico</span>
+                    </div>
+
+                    <div class="contenedor-grafico">
+                        <canvas id="grafico-deterioro"></canvas>
+                    </div>
+                </article>
+
+
+                <article class="tarjeta-panel estado-panel">
+                    <div class="encabezado-tarjeta">
+                        <div>
+                            <h3>Estado de componentes</h3>
+                            <p>Clasificación según su umbral</p>
+                        </div>
+                    </div>
+
+                    <div class="estado-vacio" id="resumen-estados">
+                        <span>⚙</span>
+                        <strong>Sin datos registrados</strong>
+                        <p>
+                            Registra componentes y mediciones
+                            para visualizar su estado.
+                        </p>
+                    </div>
+                </article>
+
+            </div>
+
+
+            <!-- TABLA RECIENTE -->
+            <article class="tarjeta-panel tabla-panel">
+
+                <div class="encabezado-tarjeta">
+                    <div>
+                        <h3>Componentes registrados</h3>
+                        <p>Resumen de los componentes del sistema</p>
+                    </div>
+
+                    <button class="boton-secundario"
+                            onclick="mostrarSeccion('componentes')">
+                        Ver componentes
+                    </button>
+                </div>
+
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Componente</th>
+                                <th>Tipo</th>
+                                <th>Ubicación</th>
+                                <th>Umbral</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="tabla-componentes">
+                            <tr>
+                                <td colspan="6" class="sin-datos">
+                                    Todavía no hay componentes registrados.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- APARTADO 2: COMPONENTES MECÁNICOS -->
+        <section id="componentes" class="seccion oculto">
+
+            <div class="encabezado-seccion">
+                <div>
+                    <span class="etiqueta">GESTIÓN DE ACTIVOS</span>
+                    <h2>Componentes mecánicos</h2>
+                    <p>
+                        Registra y administra los componentes que serán
+                        evaluados mediante el modelo de deterioro.
+                    </p>
+                </div>
+
+                <button class="boton-principal"
+                        onclick="mostrarFormulario()">
+                    + Nuevo componente
+                </button>
+            </div>
+
+
+            <!-- FORMULARIO -->
+            <article class="tarjeta-panel formulario-panel oculto"
+              id="formulario-componente">
+
+                <div class="encabezado-tarjeta">
+                    <div>
+                        <h3>Registro de componente</h3>
+                        <p>Introduce las características del componente</p>
+                    </div>
+                </div>
+
+                <form id="form-componente">
+
+                    <div class="formulario-grid">
+
+                        <div class="campo">
+                            <label for="codigo">Código del componente</label>
+                            <input type="text" id="codigo"
+                                   placeholder="Ej. CMP-001" required>
+                        </div>
+
+                        <div class="campo">
+                            <label for="nombre">Nombre</label>
+                            <input type="text" id="nombre"
+                                   placeholder="Ej. Rodamiento principal"
+                                   required>
+                        </div>
+
+                        <div class="campo">
+                            <label for="tipo">Tipo de componente</label>
+                            <select id="tipo" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="Rodamiento">Rodamiento</option>
+                                <option value="Motor">Motor</option>
+                                <option value="Eje">Eje</option>
+                                <option value="Polea">Polea</option>
+                                <option value="Cable">Cable</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="campo">
+                            <label for="ubicacion">Ubicación</label>
+                            <input type="text" id="ubicacion"
+                                   placeholder="Ej. Estación superior">
+                        </div>
+
+                        <div class="campo">
+                            <label for="unidad-indicador">
+                                Unidad del indicador
+                            </label>
+                            <input type="text" id="unidad-indicador"
+                                   placeholder="Ej. %" required>
+                        </div>
+
+                        <div class="campo">
+                            <label for="umbral">
+                                Umbral de inspección
+                            </label>
+                            <input type="number" id="umbral"
+                                   placeholder="Ej. 25"
+                                   step="any" min="0" required>
+                        </div>
+
+                        <div class="campo campo-completo">
+                            <label for="descripcion">Descripción</label>
+                            <textarea id="descripcion"
+                                      rows="3"
+                                      placeholder="Características u observaciones del componente..."></textarea>
+                        </div>
+
+                    </div>
+
+                    <div class="acciones-formulario">
+                        <button type="button"
+                                class="boton-secundario"
+                                onclick="ocultarFormulario()">
+                            Cancelar
+                        </button>
+
+                        <button type="submit" class="boton-principal">
+                            Guardar componente
+                        </button>
+                    </div>
+
+                </form>
+
+            </article>
+
+
+            <!-- LISTADO -->
+            <article class="tarjeta-panel tabla-panel">
+
+                <div class="encabezado-tarjeta">
+                    <div>
+                        <h3>Inventario de componentes</h3>
+                        <p>Listado de componentes registrados</p>
+                    </div>
+
+                    <input type="search"
+                           id="buscar-componente"
+                           class="buscador"
+                           placeholder="Buscar componente...">
+                </div>
+
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Ubicación</th>
+                                <th>Unidad</th>
+                                <th>Umbral</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="inventario-componentes">
+                            <tr>
+                                <td colspan="7" class="sin-datos">
+                                    No hay componentes registrados todavía.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- SECCIONES QUE IMPLEMENTAREMOS DESPUÉS -->
+        
+<section id="mediciones" class="seccion oculto">
+
+    <div class="encabezado-seccion">
+        <div>
+            <span class="etiqueta">REGISTRO Y SEGUIMIENTO</span>
+            <h2>Mediciones de deterioro</h2>
+            <p>
+                Registra y consulta el comportamiento de deterioro
+                de los componentes mecánicos.
+            </p>
         </div>
 
-        <p class="nota">
-            Nota: esta matriz es independiente de los parámetros
-            del modelo de deterioro. Más adelante podremos incorporar
-            la calibración mediante observaciones.
-        </p>
-    </section>
-
-    <!-- CONFIGURACIÓN -->
-    <section class="seccion">
-        <h2>4. Configuración de los métodos numéricos</h2>
-
-        <div class="campos">
-            <div class="campo">
-                <label for="tolerancia">Tolerancia</label>
-                <input type="number" id="tolerancia"
-                       value="0.000001" step="any">
-            </div>
-
-            <div class="campo">
-                <label for="iteraciones">Máximo de iteraciones</label>
-                <input type="number" id="iteraciones" value="100">
-            </div>
-
-            <div class="campo">
-                <label for="x0">Valor inicial</label>
-                <input type="number" id="x0" value="0" step="any">
-            </div>
-        </div>
-
-        <p class="descripcion">
-            Métodos disponibles:
-            Jacobi, Gauss-Seidel, LU y gradiente conjugado.
-        </p>
-
-        <button id="ejecutar" class="boton-principal">
-            Ejecutar simulación
+        <button class="boton-principal"
+                onclick="mostrarFormularioMedicion()">
+            + Nueva medición
         </button>
-    </section>
+    </div>
 
-    <!-- RESULTADOS -->
-    <section class="seccion">
-        <h2>5. Resultados de la simulación</h2>
 
-        <div id="estado-resultados" class="estado">
-            Los resultados aparecerán aquí cuando conectemos
-            los métodos numéricos.
-        </div>
+    <!-- FORMULARIO DE MEDICIONES -->
 
-        <div class="resultados">
-            <div class="resultado">
-                <span>Solución obtenida</span>
-                <strong id="solucion">Pendiente</strong>
-            </div>
+    <article class="tarjeta-panel formulario-panel oculto"
+             id="formulario-medicion">
 
-            <div class="resultado">
-                <span>Error numérico</span>
-                <strong id="error">Pendiente</strong>
-            </div>
-
-            <div class="resultado">
-                <span>Residual</span>
-                <strong id="residual">Pendiente</strong>
+        <div class="encabezado-tarjeta">
+            <div>
+                <h3>Registrar nueva medición</h3>
+                <p>Introduce los valores observados del componente</p>
             </div>
         </div>
 
-        <h3>Gráfico de resultados</h3>
-        <div class="grafico">
-            <canvas id="grafico-deterioro"></canvas>
+        <form id="form-medicion">
+
+            <div class="formulario-grid">
+
+                <div class="campo campo-completo">
+                    <label for="componente-medicion">
+                        Componente mecánico
+                    </label>
+
+                    <select id="componente-medicion" required>
+                        <option value="">
+                            Selecciona un componente
+                        </option>
+                    </select>
+                </div>
+
+
+                <div class="campo">
+                    <label for="tiempo-medicion">
+                        Tiempo de medición
+                    </label>
+
+                    <input type="number"
+                           id="tiempo-medicion"
+                           min="0"
+                           step="any"
+                           placeholder="Ej. 1"
+                           required>
+
+                    <small>Introduce el tiempo en la unidad definida para el estudio.</small>
+                </div>
+
+
+                <div class="campo">
+                    <label for="valor-deterioro">
+                        Valor de deterioro
+                    </label>
+
+                    <input type="number"
+                           id="valor-deterioro"
+                           min="0"
+                           step="any"
+                           placeholder="Ej. 5.5"
+                           required>
+                </div>
+
+
+                <div class="campo campo-completo">
+                    <label for="observacion-medicion">
+                        Observaciones
+                    </label>
+
+                    <textarea id="observacion-medicion"
+                              rows="3"
+                              placeholder="Describe las condiciones observadas..."></textarea>
+                </div>
+
+            </div>
+
+            <div class="acciones-formulario">
+
+                <button type="button"
+                        class="boton-secundario"
+                        onclick="ocultarFormularioMedicion()">
+                    Cancelar
+                </button>
+
+                <button type="submit" class="boton-principal">
+                    Guardar medición
+                </button>
+
+            </div>
+
+        </form>
+
+    </article>
+
+
+    <!-- HISTORIAL -->
+
+    <article class="tarjeta-panel tabla-panel">
+
+        <div class="encabezado-tarjeta">
+            <div>
+                <h3>Historial de mediciones</h3>
+                <p>Registros almacenados en el sistema</p>
+            </div>
+
+            <input type="search"
+                   id="buscar-medicion"
+                   class="buscador"
+                   placeholder="Buscar componente...">
         </div>
-    </section>
 
-</main>
+        <div class="tabla-contenedor">
 
-<footer>
-    <p>SIMTELE-RISK | Proyecto académico de Métodos Numéricos</p>
-</footer>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Componente</th>
+                        <th>Código</th>
+                        <th>Tiempo</th>
+                        <th>Deterioro</th>
+                        <th>Fecha de registro</th>
+                        <th>Observación</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tabla-mediciones">
+                    <tr>
+                        <td colspan="6" class="sin-datos">
+                            No hay mediciones registradas todavía.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+    </article>
+
+</section>
+
+        
+<!-- SECCIONES DE MÉTODOS NUMÉRICOS -->
+
+<section id="sistemas-lineales" class="seccion oculto">
+
+    <!-- Aquí implementaremos Jacobi, Gauss-Seidel,
+         LU y Gradiente Conjugado -->
+
+</section>
+
+<section id="raices" class="seccion oculto">
+
+    <!-- Aquí implementaremos Bisección,
+         Newton-Raphson y Secante -->
+
+</section>
+
+<section id="integracion" class="seccion oculto">
+
+    <!-- Aquí implementaremos los métodos de integración opcionales -->
+
+</section>
+
+
+<!-- SECCIONES DE ANÁLISIS -->
+
+<section id="mantenimiento" class="seccion oculto">
+
+    <!-- Aquí analizaremos las decisiones de mantenimiento -->
+
+</section>
+
+<section id="historial" class="seccion oculto">
+
+    <!-- Aquí consultaremos y compararemos las simulaciones -->
+
+</section>
+
+
+        <footer class="pie">
+            SIMTELE-RISK · Proyecto académico de Métodos Numéricos
+        </footer>
+
+    </main>
+
+</div>
 
 <script src="{{ url_for('static', filename='js/deterioro.js') }}"></script>
 
