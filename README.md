@@ -69,7 +69,7 @@ git clone https://github.com/Jazmin-lm/MetodosNumericos1.git
 Ingresar a la carpeta:
 
 ```bash
-cd Sistema-Teleferico
+cd MetodosNumericos1
 ```
 
 Abrir el proyecto en Visual Studio Code:

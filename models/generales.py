@@ -2,13 +2,14 @@
 from datetime import datetime, timezone
 from extensions import db
 
-
 class CasoEstudio(db.Model):
     __tablename__ = "caso_estudio"
 
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     modelo_version = db.Column(db.String(20), nullable=False)
+
+    modulo = db.Column(db.String(30), nullable=False)
 
     escenarios = db.relationship(
         "Escenario",
