@@ -58,7 +58,7 @@ git clone https://github.com/Jazmin-lm/Sistema-Teleferico.git
 Ingresa a la carpeta:
 
 ```bash
-cd Sistema-Teleferico
+cd MetodosNumericos1
 ```
 
 También puedes abrir la carpeta desde Visual Studio Code:
