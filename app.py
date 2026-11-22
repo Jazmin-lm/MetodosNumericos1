@@ -7,6 +7,9 @@ from backend.metodos.sistemas_lineales import (
     ejecutar_metodos,
     ejecutar_escenario
 )
+# Importación del módulo de sensores
+from backend.modulos.sensores import reconstruir_senal
+
 # Importación de configuración y extensiones
 from config import Config
 from extensions import db, migrate
@@ -22,7 +25,19 @@ migrate.init_app(app, db)
 
 # Importar modelos para que Flask-Migrate los detecte
 from models import *
+from backend.services.sensores.escenarios_service import (
+    listar_escenarios_sensores,
+)
 
+from backend.services.sensores.reconstruccion_service import (
+    ejecutar_reconstruccion,
+)
+
+from backend.services.sensores.historial_service import (
+    listar_historial_sensores,
+    obtener_reconstruccion,
+    obtener_datos_repeticion,
+)
 
 # ==============================
 # RUTAS PRINCIPALES
@@ -52,6 +67,547 @@ def oscilaciones():
 def sensores():
     return render_template("sensores.html")
 
+
+@app.route("/sensores/gestion")
+def gestion_sensores():
+    return render_template("modulo4/gestion_sensores.html")
+
+# ==========================================
+# API: RECONSTRUCCIÓN DE SEÑALES DE SENSORES
+# ==========================================
+
+@app.route("/api/sensores/reconstruir", methods=["POST"])
+def api_reconstruir_sensores():
+    datos = request.get_json(silent=True) or {}
+
+    try:
+        senal_id = int(datos.get("senal_id"))
+        puntos_evaluar = datos.get("puntos_evaluar")
+
+        if not isinstance(puntos_evaluar, list) or not puntos_evaluar:
+            return jsonify({
+                "exito": False,
+                "error": "Debes indicar los puntos que deseas reconstruir."
+            }), 400
+
+        resultado = ejecutar_reconstruccion(
+            senal_id=senal_id,
+            puntos_evaluar=puntos_evaluar,
+            escenario_id=datos.get("escenario_id"),
+            observacion=datos.get("observacion"),
+        )
+
+        return jsonify({
+            "exito": True,
+            "mensaje": "Reconstrucción ejecutada y guardada.",
+            **resultado,
+        }), 200
+
+    except (ValueError, TypeError) as error:
+        db.session.rollback()
+        return jsonify({
+            "exito": False,
+            "error": str(error),
+        }), 400
+
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error al reconstruir señal")
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo completar la reconstrucción.",
+        }), 500
+
+
+
+# ==========================================
+# API: MODULO 4 - SENSORES Y SEÑALES
+# ==========================================
+
+@app.route("/api/sensores/escenarios", methods=["GET"])
+def api_escenarios_sensores():
+    try:
+        return jsonify({
+            "exito": True,
+            "escenarios": listar_escenarios_sensores()
+        }), 200
+    except Exception:
+        app.logger.exception("Error al consultar escenarios de sensores")
+        return jsonify({
+            "exito": False,
+            "error": "No se pudieron consultar los escenarios."
+        }), 500
+
+
+@app.route("/api/sensores/registrar", methods=["POST"])
+def api_registrar_sensor():
+    datos = request.get_json(silent=True) or {}
+
+    try:
+        codigo = str(datos.get("codigo") or "").strip()
+        nombre = str(datos.get("nombre") or "").strip()
+        unidad = str(datos.get("unidad_medida") or "").strip()
+
+        if not codigo or not nombre or not unidad:
+            return jsonify({
+                "exito": False,
+                "error": "Código, nombre y unidad de medida son obligatorios."
+            }), 400
+
+        existente = Sensor.query.filter_by(codigo=codigo).first()
+
+        if existente:
+            return jsonify({
+                "exito": False,
+                "error": "Ya existe un sensor con ese código."
+            }), 409
+
+        sensor = Sensor(
+            codigo=codigo,
+            nombre=nombre,
+            tipo=str(datos.get("tipo") or "").strip(),
+            ubicacion=str(datos.get("ubicacion") or "").strip(),
+            unidad_medida=unidad,
+            descripcion=str(datos.get("descripcion") or "").strip(),
+        )
+
+        db.session.add(sensor)
+        db.session.commit()
+
+        return jsonify({
+            "exito": True,
+            "mensaje": "Sensor registrado correctamente.",
+            "sensor_id": sensor.id,
+        }), 201
+
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error al registrar sensor")
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo registrar el sensor."
+        }), 500
+
+
+@app.route("/api/sensores/senales", methods=["POST"])
+def api_registrar_senal():
+    datos = request.get_json(silent=True) or {}
+
+    try:
+        sensor_id = int(datos.get("sensor_id"))
+        nombre = str(datos.get("nombre") or "").strip()
+        puntos = datos.get("puntos")
+        referencias = datos.get("referencias", [])
+
+        if not nombre:
+            return jsonify({
+                "exito": False,
+                "error": "El nombre de la señal es obligatorio."
+            }), 400
+
+        if not isinstance(puntos, list) or len(puntos) < 2:
+            return jsonify({
+                "exito": False,
+                "error": "Debes enviar al menos dos mediciones."
+            }), 400
+
+        if not isinstance(referencias, list):
+            return jsonify({
+                "exito": False,
+                "error": "Las referencias deben enviarse como una lista."
+            }), 400
+
+        sensor = db.session.get(Sensor, sensor_id)
+
+        if not sensor:
+            return jsonify({
+                "exito": False,
+                "error": "El sensor indicado no existe."
+            }), 404
+
+        senal = Senal(
+            sensor_id=sensor.id,
+            nombre=nombre,
+            descripcion=str(datos.get("descripcion") or "").strip(),
+            origen=str(datos.get("origen") or "REGISTRO_MANUAL").strip(),
+        )
+
+        db.session.add(senal)
+        db.session.flush()
+
+        tiempos = set()
+
+        for punto in puntos:
+            tiempo = float(punto["tiempo"])
+            valor = float(punto["valor"])
+
+            if not math.isfinite(tiempo) or not math.isfinite(valor):
+                raise ValueError("Las mediciones deben ser números finitos.")
+
+            if tiempo in tiempos:
+                raise ValueError("Hay tiempos repetidos en las mediciones.")
+
+            tiempos.add(tiempo)
+
+            db.session.add(PuntoSenal(
+                senal_id=senal.id,
+                tiempo=tiempo,
+                valor=valor,
+                observacion=punto.get("observacion"),
+            ))
+
+        tiempos_referencia = set()
+
+        for referencia in referencias:
+            tiempo = float(referencia["tiempo"])
+            valor_real = float(referencia["valor_real"])
+
+            if not math.isfinite(tiempo) or not math.isfinite(valor_real):
+                raise ValueError("Las referencias deben ser números finitos.")
+
+            if tiempo in tiempos_referencia:
+                raise ValueError("Hay tiempos repetidos en las referencias.")
+
+            tiempos_referencia.add(tiempo)
+
+            db.session.add(PuntoReferencia(
+                senal_id=senal.id,
+                tiempo=tiempo,
+                valor_real=valor_real,
+                fuente=referencia.get("fuente"),
+                observacion=referencia.get("observacion"),
+            ))
+
+        db.session.commit()
+
+        return jsonify({
+            "exito": True,
+            "mensaje": "Señal registrada correctamente.",
+            "senal_id": senal.id,
+            "cantidad_mediciones": len(puntos),
+            "cantidad_referencias": len(referencias),
+        }), 201
+
+    except (ValueError, TypeError, KeyError) as error:
+        db.session.rollback()
+        return jsonify({
+            "exito": False,
+            "error": str(error),
+        }), 400
+
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error al registrar señal")
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo registrar la señal."
+        }), 500
+
+
+@app.route("/api/sensores/historial", methods=["GET"])
+def api_historial_sensores():
+    try:
+        limite = request.args.get("limite", 50, type=int)
+
+        return jsonify({
+            "exito": True,
+            "historial": listar_historial_sensores(limite),
+        }), 200
+
+    except Exception:
+        app.logger.exception("Error al consultar historial de sensores")
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo consultar el historial."
+        }), 500
+
+
+@app.route("/api/sensores/reconstruccion/<int:reconstruccion_id>",
+           methods=["GET"])
+def api_detalle_reconstruccion(reconstruccion_id):
+    try:
+        resultado = obtener_reconstruccion(reconstruccion_id)
+
+        if resultado is None:
+            return jsonify({
+                "exito": False,
+                "error": "La reconstrucción no existe."
+            }), 404
+
+        return jsonify({
+            "exito": True,
+            "reconstruccion": resultado,
+        }), 200
+
+    except Exception:
+        app.logger.exception("Error al consultar reconstrucción")
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo consultar la reconstrucción."
+        }), 500
+
+
+@app.route(
+    "/api/sensores/reconstruccion/<int:reconstruccion_id>/repetir",
+    methods=["POST"]
+)
+def api_repetir_reconstruccion(reconstruccion_id):
+    try:
+        datos = obtener_datos_repeticion(
+            reconstruccion_id
+        )
+
+        if datos is None:
+            return jsonify({
+                "exito": False,
+                "error": "La reconstrucción original no existe."
+            }), 404
+
+        resultado = ejecutar_reconstruccion(
+            senal_id=datos["senal_id"],
+            puntos_evaluar=datos["puntos_evaluar"],
+            escenario_id=datos["escenario_id"],
+            observacion=datos["observacion"]
+        )
+
+        return jsonify({
+            "exito": True,
+            "mensaje": "La reconstrucción se repitió correctamente.",
+            **resultado
+        }), 200
+
+    except (ValueError, TypeError) as error:
+        db.session.rollback()
+
+        return jsonify({
+            "exito": False,
+            "error": str(error)
+        }), 400
+
+    except Exception:
+        db.session.rollback()
+
+        app.logger.exception(
+            "Error al repetir reconstrucción de sensores"
+        )
+
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo repetir la reconstrucción."
+        }), 500
+
+
+
+@app.route("/api/sensores/listar", methods=["GET"])
+def api_listar_sensores():
+    try:
+        sensores = Sensor.query.order_by(Sensor.id.desc()).all()
+        return jsonify({
+            "exito": True,
+            "sensores": [
+                {
+                    "id": s.id,
+                    "codigo": s.codigo,
+                    "nombre": s.nombre,
+                    "tipo": s.tipo,
+                    "ubicacion": s.ubicacion,
+                    "unidad_medida": s.unidad_medida,
+                    "descripcion": s.descripcion,
+                    "activo": s.activo
+                } for s in sensores
+            ]
+        })
+    except Exception as e:
+        return jsonify({"exito": False, "error": str(e)}), 500
+
+
+@app.route("/api/sensores/<int:sensor_id>", methods=["PUT"])
+def api_actualizar_sensor(sensor_id):
+    datos = request.get_json(silent=True) or {}
+
+    try:
+        sensor = db.session.get(Sensor, sensor_id)
+
+        if not sensor:
+            return jsonify({
+                "exito": False,
+                "error": "El sensor no existe."
+            }), 404
+
+        codigo = str(datos.get("codigo") or "").strip()
+        nombre = str(datos.get("nombre") or "").strip()
+        unidad = str(datos.get("unidad_medida") or "").strip()
+
+        if not codigo or not nombre or not unidad:
+            return jsonify({
+                "exito": False,
+                "error": "Código, nombre y unidad de medida son obligatorios."
+            }), 400
+
+        if len(codigo) > 50 or len(nombre) > 100 or len(unidad) > 30:
+            return jsonify({
+                "exito": False,
+                "error": "Uno de los campos supera la longitud permitida."
+            }), 400
+
+        codigo_existente = Sensor.query.filter(
+            db.func.lower(Sensor.codigo) == codigo.lower(),
+            Sensor.id != sensor_id
+        ).first()
+
+        if codigo_existente:
+            return jsonify({
+                "exito": False,
+                "error": "Ya existe otro sensor con ese código."
+            }), 409
+
+        sensor.codigo = codigo
+        sensor.nombre = nombre
+        sensor.tipo = str(datos.get("tipo") or "").strip()
+        sensor.ubicacion = str(datos.get("ubicacion") or "").strip()
+        sensor.unidad_medida = unidad
+        sensor.descripcion = str(datos.get("descripcion") or "").strip()
+
+        db.session.commit()
+
+        return jsonify({
+            "exito": True,
+            "mensaje": "Sensor actualizado correctamente.",
+            "sensor_id": sensor.id
+        }), 200
+
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error al actualizar sensor")
+
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo actualizar el sensor."
+        }), 500
+
+
+@app.route("/api/sensores/<int:sensor_id>/estado", methods=["PATCH"])
+def api_cambiar_estado_sensor(sensor_id):
+    datos = request.get_json(silent=True) or {}
+
+    try:
+        sensor = db.session.get(Sensor, sensor_id)
+
+        if not sensor:
+            return jsonify({
+                "exito": False,
+                "error": "El sensor no existe."
+            }), 404
+
+        activo = datos.get("activo")
+
+        if not isinstance(activo, bool):
+            return jsonify({
+                "exito": False,
+                "error": "El estado debe ser verdadero o falso."
+            }), 400
+
+        sensor.activo = activo
+        db.session.commit()
+
+        return jsonify({
+            "exito": True,
+            "mensaje": (
+                "Sensor activado correctamente."
+                if activo else "Sensor desactivado correctamente."
+            ),
+            "sensor_id": sensor.id,
+            "activo": sensor.activo
+        }), 200
+
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error al cambiar estado del sensor")
+
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo cambiar el estado del sensor."
+        }), 500
+
+
+@app.route("/api/sensores/senales/<int:sensor_id>", methods=["GET"])
+def api_listar_senales_sensor(sensor_id):
+    try:
+        sensor = db.session.get(Sensor, sensor_id)
+
+        if not sensor:
+            return jsonify({
+                "exito": False,
+                "error": "Sensor no encontrado"
+            }), 404
+
+        senales = Senal.query.filter_by(
+            sensor_id=sensor_id
+        ).order_by(Senal.id.desc()).all()
+
+        return jsonify({
+            "exito": True,
+            "senales": [
+                {
+                    "id": s.id,
+                    "nombre": s.nombre,
+                    "descripcion": s.descripcion,
+                    "origen": s.origen,
+                    "estado": s.estado,
+                    "cantidad_puntos": len(s.puntos)
+                } for s in senales
+            ]
+        })
+    except Exception as e:
+        return jsonify({"exito": False, "error": str(e)}), 500
+
+@app.route("/api/sensores/senal/<int:senal_id>", methods=["GET"])
+def api_obtener_senal(senal_id):
+    try:
+        senal = db.session.get(Senal, senal_id)
+
+        if not senal:
+            return jsonify({
+                "exito": False,
+                "error": "Señal no encontrada"
+            }), 404
+
+        puntos = PuntoSenal.query.filter_by(
+            senal_id=senal_id
+        ).order_by(PuntoSenal.tiempo.asc()).all()
+
+        referencias = PuntoReferencia.query.filter_by(
+            senal_id=senal_id
+        ).order_by(PuntoReferencia.tiempo.asc()).all()
+
+        return jsonify({
+            "exito": True,
+            "senal": {
+                "id": senal.id,
+                "nombre": senal.nombre,
+                "descripcion": senal.descripcion,
+                "origen": senal.origen,
+                "estado": senal.estado
+            },
+            "puntos": [
+                {
+                    "tiempo": p.tiempo,
+                    "valor": p.valor
+                } for p in puntos
+            ],
+            "referencias": [
+                {
+                    "tiempo": p.tiempo,
+                    "valor_real": p.valor_real
+                } for p in referencias
+            ]
+        })
+
+    except Exception as e:
+        return jsonify({
+            "exito": False,
+            "error": str(e)
+        }), 500
 
 @app.route("/historial")
 def historial():
