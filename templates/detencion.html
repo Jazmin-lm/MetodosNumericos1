@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detención de Emergencia | SIMTELE-RISK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #e9f2fc 0%, #f2f7fd 55%, #e6f0fb 100%);
+            color: #0f172a;
+        }
+
+        .sidebar-panel {
+            background: linear-gradient(180deg, #0b192c 0%, #10243e 100%);
+        }
+
+        .nav-link-item {
+            color: #9fb8d8;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link-item:hover {
+            background-color: rgba(59, 130, 246, 0.18);
+            color: #ffffff;
+        }
+
+        .nav-link-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Superficies con azul claro suave para evitar blanco plano y mantener armonía */
+        .surface-card {
+            background: linear-gradient(180deg, #f5f9ff 0%, #ebf3fe 100%);
+            border: 1px solid #bfd7f8;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(15, 42, 82, 0.05);
+        }
+
+        .surface-banner {
+            background: linear-gradient(135deg, #e1effe 0%, #d3e7fd 100%);
+            border: 1px solid #9ec5f8;
+            border-radius: 12px;
+        }
+
+        .field-input {
+            background-color: #f8fbff;
+            border: 1px solid #9ec5f8;
+            border-radius: 8px;
+            color: #0f172a;
+        }
+
+        .field-input:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+        }
+
+        .escenario-chip {
+            background-color: #f3f8ff;
+            border: 1.5px solid #b8d4f8;
+            color: #1e3a8a;
+            transition: all 0.2s ease;
+        }
+
+        .escenario-chip:hover {
+            background-color: #e2efff;
+            border-color: #3b82f6;
+        }
+
+        .escenario-chip.active {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            border-color: #1e40af;
+            color: #ffffff;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+        }
+
+        .escenario-chip.active .chip-sub {
+            color: #dbeafe;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row">
+
+    <!-- Barra lateral estilo SIMTELE-RISK -->
+    <aside class="sidebar-panel w-full lg:w-64 lg:min-h-screen text-white flex flex-col justify-between shrink-0">
+        <div>
+            <div class="p-5 border-b border-slate-800/80 flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-white text-base shadow">
+                    S
+                </div>
+                <div>
+                    <div class="font-bold text-sm tracking-wide">SIMTELE-RISK</div>
+                    <div class="text-[11px] text-slate-400">Plataforma de análisis</div>
+                </div>
+            </div>
+
+            <div class="px-5 pt-5 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                MÓDULO 01
+            </div>
+
+            <nav class="px-3 space-y-1 text-sm">
+                <a href="#sec-config" onclick="setActiveNav(this)" class="nav-link-item active flex items-center space-x-2.5 px-3 py-2.5 rounded-lg">
+                    <span>Configuración</span>
+                </a>
+                <a href="#sec-resultados" onclick="setActiveNav(this)" class="nav-link-item flex items-center space-x-2.5 px-3 py-2.5 rounded-lg">
+                    <span>Resultados</span>
+                </a>
+                <a href="#sec-graficos" onclick="setActiveNav(this)" class="nav-link-item flex items-center space-x-2.5 px-3 py-2.5 rounded-lg">
+                    <span>Gráficas y Error</span>
+                </a>
+                <a href="#sec-tabla" onclick="setActiveNav(this)" class="nav-link-item flex items-center space-x-2.5 px-3 py-2.5 rounded-lg">
+                    <span>Tabla Comparativa</span>
+                </a>
+                <a href="#sec-historial" onclick="setActiveNav(this)" class="nav-link-item flex items-center space-x-2.5 px-3 py-2.5 rounded-lg">
+                    <span>Historial</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-5 border-t border-slate-800/80 space-y-3">
+            <div class="flex items-center space-x-2 text-xs text-emerald-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Simulador listo</span>
+            </div>
+            <a href="/" class="block text-xs text-slate-400 hover:text-white transition">
+                ← Volver al inicio
+            </a>
+        </div>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="flex-1 p-5 md:p-8 max-w-6xl mx-auto w-full space-y-6">
+
+        <!-- Encabezado -->
+        <header class="space-y-1">
+            <div class="text-[11px] font-bold uppercase tracking-widest text-blue-700">
+                MÓDULO 1 · DETENCIÓN DE EMERGENCIA DE CABINAS
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900">
+                Simulación de Frenado (RK2 vs RK4)
+            </h1>
+            <p class="text-sm text-slate-600">
+                Evaluación numérica del tiempo de detención, distancia en andén y error relativo entre métodos Runge-Kutta.
+            </p>
+        </header>
+
+        <!-- Configuración y Escenarios -->
+        <section id="sec-config" class="surface-card p-6 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-200/80 pb-4">
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-blue-700">PARÁMETROS DE ENTRADA</div>
+                    <h2 class="text-lg font-bold text-slate-900">Configuración del escenario</h2>
+                </div>
+                <div class="text-xs font-mono bg-blue-100 text-blue-900 px-3 py-1.5 rounded-lg border border-blue-300">
+                    m·(dv/dt) = -F_freno - c·v - m·g·sin(θ)
+                </div>
+            </div>
+
+            <!-- Botones directos de los 3 escenarios -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button type="button" id="chip-NORMAL" onclick="seleccionarEscenario('NORMAL')" class="escenario-chip active p-3.5 rounded-xl text-left">
+                    <div class="font-bold text-sm">Escenario NORMAL</div>
+                    <div class="chip-sub text-xs text-blue-800/80 mt-0.5">1100 kg · v₀ = 5.0 m/s · θ = 5° · Δt = 0.05 s</div>
+                </button>
+                <button type="button" id="chip-ESTRES" onclick="seleccionarEscenario('ESTRES')" class="escenario-chip p-3.5 rounded-xl text-left">
+                    <div class="font-bold text-sm">Escenario ESTRÉS</div>
+                    <div class="chip-sub text-xs text-blue-800/80 mt-0.5">1650 kg · v₀ = 6.0 m/s · θ = 15° · Δt = 0.05 s</div>
+                </button>
+                <button type="button" id="chip-MAL_CONDICIONADO" onclick="seleccionarEscenario('MAL_CONDICIONADO')" class="escenario-chip p-3.5 rounded-xl text-left">
+                    <div class="font-bold text-sm">Escenario MAL CONDICIONADO</div>
+                    <div class="chip-sub text-xs text-blue-800/80 mt-0.5">Δt = 0.25 s · θ = 30° · Perturbación +5%</div>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="escenario" class="block text-xs font-semibold text-slate-800 mb-1.5">Escenario *</label>
+                    <select id="escenario" onchange="seleccionarEscenario(this.value)" class="field-input w-full px-3.5 py-2.5 text-sm">
+                        <option value="NORMAL">NORMAL</option>
+                        <option value="ESTRES">ESTRÉS</option>
+                        <option value="MAL_CONDICIONADO">MAL CONDICIONADO</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="observacion" class="block text-xs font-semibold text-slate-800 mb-1.5">Observación</label>
+                    <input type="text" id="observacion" placeholder="Nota opcional de la ejecución" class="field-input w-full px-3.5 py-2.5 text-sm">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="masa_kg" class="block text-xs font-semibold text-slate-800 mb-1.5">Masa total m (kg) *</label>
+                    <input type="number" step="10" id="masa_kg" value="1100" class="field-input w-full px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="velocidad_inicial_ms" class="block text-xs font-semibold text-slate-800 mb-1.5">Velocidad inicial v₀ (m/s) *</label>
+                    <input type="number" step="0.1" id="velocidad_inicial_ms" value="5.0" class="field-input w-full px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="angulo_deg" class="block text-xs font-semibold text-slate-800 mb-1.5">Inclinación θ (grados) *</label>
+                    <input type="number" step="1" id="angulo_deg" value="5" class="field-input w-full px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="fuerza_freno_n" class="block text-xs font-semibold text-slate-800 mb-1.5">Fuerza de frenado (N) *</label>
+                    <input type="number" step="50" id="fuerza_freno_n" value="2500" class="field-input w-full px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="dt" class="block text-xs font-semibold text-slate-800 mb-1.5">Paso temporal Δt (s) *</label>
+                    <input type="number" step="0.01" id="dt" value="0.05" class="field-input w-full px-3.5 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="perturbacion_pct" class="block text-xs font-semibold text-slate-800 mb-1.5">Perturbación en masa (%)</label>
+                    <input type="number" step="0.5" id="perturbacion_pct" value="0" class="field-input w-full px-3.5 py-2.5 text-sm">
+                </div>
+            </div>
+
+            <div id="msg-error" class="hidden bg-red-100 border border-red-300 text-red-800 text-xs px-4 py-3 rounded-lg"></div>
+
+            <div class="pt-2 flex flex-wrap items-center justify-between gap-3">
+                <span class="text-xs text-slate-600">
+                    Margen de referencia en andén: <strong>6.50 m</strong>
+                </span>
+                <button type="button" onclick="ejecutarSimulacion()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-6 py-2.5 rounded-lg shadow transition">
+                    Ejecutar simulación
+                </button>
+            </div>
+        </section>
+
+        <!-- Resultados y Conclusiones -->
+        <section id="sec-resultados" class="space-y-4">
+            <div class="surface-banner px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-950">
+                <div>
+                    <strong>Simulación completada</strong> · Escenario: <strong id="lbl-escenario">NORMAL</strong> · Iteraciones: <strong id="lbl-iters">--</strong>
+                </div>
+                <div id="lbl-estado-anden" class="font-semibold text-blue-900">--</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="surface-card p-5 border-t-4 border-t-blue-600">
+                    <div class="text-xs font-semibold text-blue-900/80">Tiempo de detención · RK4</div>
+                    <div id="metric-tiempo" class="text-2xl font-extrabold text-slate-900 mt-2">-- s</div>
+                    <div id="metric-acel" class="text-xs text-slate-600 mt-1.5">Desaceleración media: -- m/s²</div>
+                </div>
+
+                <div class="surface-card p-5 border-t-4 border-t-sky-500">
+                    <div class="text-xs font-semibold text-blue-900/80">Distancia de frenado · RK4</div>
+                    <div id="metric-distancia" class="text-2xl font-extrabold text-slate-900 mt-2">-- m</div>
+                    <div id="metric-margen" class="text-xs text-slate-600 mt-1.5">Margen en andén: 6.50 m</div>
+                </div>
+
+                <div class="surface-card p-5 border-t-4 border-t-indigo-600">
+                    <div class="text-xs font-semibold text-blue-900/80">Error Relativo Máx. · RK2 vs RK4</div>
+                    <div id="metric-error" class="text-2xl font-extrabold text-slate-900 mt-2">-- %</div>
+                    <div id="metric-dt" class="text-xs text-slate-600 mt-1.5">Paso Δt: 0.05 s</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="surface-card p-5">
+                    <h3 class="text-sm font-bold text-slate-900">Conclusión numérica</h3>
+                    <p id="texto-num" class="text-xs text-slate-700 mt-2 leading-relaxed">--</p>
+                </div>
+                <div class="surface-card p-5">
+                    <h3 class="text-sm font-bold text-slate-900">Conclusión del problema</h3>
+                    <p id="texto-prob" class="text-xs text-slate-700 mt-2 leading-relaxed">--</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráficas -->
+        <section id="sec-graficos" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="surface-card p-5">
+                <h3 class="text-sm font-bold text-slate-900 mb-3">Perfil de velocidad v(t) (RK2 vs RK4)</h3>
+                <div class="h-64">
+                    <canvas id="graficaVelocidad"></canvas>
+                </div>
+            </div>
+            <div class="surface-card p-5">
+                <h3 class="text-sm font-bold text-slate-900 mb-3">Error absoluto |v_RK4 - v_RK2|</h3>
+                <div class="h-64">
+                    <canvas id="graficaError"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabla comparativa -->
+        <section id="sec-tabla" class="surface-card p-5 space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-900">Tabla comparativa de iteraciones</h3>
+                <span class="text-xs text-slate-600">Evolución temporal</span>
+            </div>
+            <div class="overflow-x-auto max-h-72 border border-blue-200 rounded-xl">
+                <table class="min-w-full text-xs text-left">
+                    <thead class="bg-blue-900 text-blue-50 uppercase text-[11px] sticky top-0">
+                        <tr>
+                            <th class="px-4 py-2.5">Iter</th>
+                            <th class="px-4 py-2.5">Tiempo (s)</th>
+                            <th class="px-4 py-2.5">Vel RK2 (m/s)</th>
+                            <th class="px-4 py-2.5">Vel RK4 (m/s)</th>
+                            <th class="px-4 py-2.5">Pos RK4 (m)</th>
+                            <th class="px-4 py-2.5">Error Abs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body" class="divide-y divide-blue-100 bg-blue-50/40 text-slate-800"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Historial de simulaciones -->
+        <section id="sec-historial" class="surface-card p-5 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Historial de ejecuciones</h3>
+                    <p class="text-xs text-slate-600">
+                        Registra tus simulaciones de esta sesión para consultarlas o repetirlas con un clic.
+                    </p>
+                </div>
+                <button type="button" onclick="limpiarHistorial()" class="text-xs font-semibold text-blue-950 bg-blue-200/80 hover:bg-blue-300/80 border border-blue-300 px-3 py-1.5 rounded-lg transition">
+                    Limpiar historial
+                </button>
+            </div>
+
+            <div class="overflow-x-auto border border-blue-200 rounded-xl">
+                <table class="min-w-full text-xs text-left">
+                    <thead class="bg-blue-900 text-blue-50 uppercase text-[11px]">
+                        <tr>
+                            <th class="px-4 py-2.5">Hora</th>
+                            <th class="px-4 py-2.5">Escenario</th>
+                            <th class="px-4 py-2.5">t_det</th>
+                            <th class="px-4 py-2.5">d_freno</th>
+                            <th class="px-4 py-2.5">Error Máx.</th>
+                            <th class="px-4 py-2.5">Observación</th>
+                            <th class="px-4 py-2.5">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historial-body" class="divide-y divide-blue-100 bg-blue-50/40 text-slate-800"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const ESCENARIOS = {
+            NORMAL: { masa_kg: 1100, velocidad_inicial_ms: 5.0, angulo_deg: 5, fuerza_freno_n: 2500, dt: 0.05, perturbacion_pct: 0 },
+            ESTRES: { masa_kg: 1650, velocidad_inicial_ms: 6.0, angulo_deg: 15, fuerza_freno_n: 4200, dt: 0.05, perturbacion_pct: 0 },
+            MAL_CONDICIONADO: { masa_kg: 1700, velocidad_inicial_ms: 6.0, angulo_deg: 30, fuerza_freno_n: 7000, dt: 0.25, perturbacion_pct: 5 }
+        };
+
+        const HISTORIAL_KEY = "simtelerisk_m1_historial_v1";
+        let chartVel = null;
+        let chartErr = null;
+
+        function setActiveNav(el) {
+            document.querySelectorAll(".nav-link-item").forEach(a => a.classList.remove("active"));
+            if (el) el.classList.add("active");
+        }
+
+        function marcarEscenarioUI(nombre) {
+            ["NORMAL", "ESTRES", "MAL_CONDICIONADO"].forEach(k => {
+                const btn = document.getElementById("chip-" + k);
+                if (btn) btn.classList.toggle("active", k === nombre);
+            });
+            const sel = document.getElementById("escenario");
+            if (sel && ESCENARIOS[nombre]) sel.value = nombre;
+        }
+
+        function seleccionarEscenario(nombre) {
+            const cfg = ESCENARIOS[nombre];
+            if (!cfg) return;
+            marcarEscenarioUI(nombre);
+            document.getElementById("masa_kg").value = cfg.masa_kg;
+            document.getElementById("velocidad_inicial_ms").value = cfg.velocidad_inicial_ms;
+            document.getElementById("angulo_deg").value = cfg.angulo_deg;
+            document.getElementById("fuerza_freno_n").value = cfg.fuerza_freno_n;
+            document.getElementById("dt").value = cfg.dt;
+            document.getElementById("perturbacion_pct").value = cfg.perturbacion_pct;
+            ejecutarSimulacion();
+        }
+
+        function calcularRK2yRK4(p) {
+            const mBase = Number(p.masa_kg);
+            const pert = Number(p.perturbacion_pct || 0) / 100;
+            const m = mBase * (1 + pert);
+            const v0 = Number(p.velocidad_inicial_ms);
+            const theta = Number(p.angulo_deg) * Math.PI / 180;
+            const freno = Number(p.fuerza_freno_n);
+            const dt = Number(p.dt);
+
+            if (!(mBase > 0 && v0 > 0 && dt > 0 && freno >= 0)) {
+                return { ok: false, error: "Verifica que masa, velocidad inicial y Δt sean mayores que cero." };
+            }
+
+            const g = 9.81;
+            const c = 15.0;
+            const acel = (v) => (-freno - c * v - m * g * Math.sin(theta)) / m;
+
+            let t = 0, v2 = v0, v4 = v0, x4 = 0, iter = 0, maxErr = 0;
+            const iteraciones = [];
+
+            while (v4 > 0 && iter < 2500) {
+                const v2Vis = Math.max(0, v2);
+                const v4Vis = Math.max(0, v4);
+                const errAbs = Math.abs(v4Vis - v2Vis);
+                if (errAbs > maxErr) maxErr = errAbs;
+
+                iteraciones.push({
+                    iteracion: iter,
+                    tiempo_s: Number(t.toFixed(4)),
+                    vel_rk2_ms: Number(v2Vis.toFixed(5)),
+                    vel_rk4_ms: Number(v4Vis.toFixed(5)),
+                    pos_rk4_m: Number(x4.toFixed(4)),
+                    error_abs: Number(errAbs.toFixed(6))
+                });
+
+                const k1_2 = acel(v2);
+                const k2_2 = acel(v2 + dt * k1_2);
+                v2 = v2 + 0.5 * dt * (k1_2 + k2_2);
+
+                const k1 = acel(v4);
+                const k2 = acel(v4 + 0.5 * dt * k1);
+                const k3 = acel(v4 + 0.5 * dt * k2);
+                const k4 = acel(v4 + dt * k3);
+                const vNext = v4 + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+
+                if (vNext >= 0) {
+                    x4 += 0.5 * (v4 + vNext) * dt;
+                    t += dt;
+                    v4 = vNext;
+                } else {
+                    const den = v4 - vNext;
+                    const frac = den !== 0 ? Math.max(0, Math.min(1, v4 / den)) : 0;
+                    const dtFin = dt * frac;
+                    x4 += 0.5 * v4 * dtFin;
+                    t += dtFin;
+                    v4 = 0;
+                }
+                iter++;
+            }
+
+            const errFinal = Math.abs(0 - Math.max(0, v2));
+            maxErr = Math.max(maxErr, errFinal);
+            iteraciones.push({
+                iteracion: iter,
+                tiempo_s: Number(t.toFixed(4)),
+                vel_rk2_ms: Number(Math.max(0, v2).toFixed(5)),
+                vel_rk4_ms: 0,
+                pos_rk4_m: Number(x4.toFixed(4)),
+                error_abs: Number(errFinal.toFixed(6))
+            });
+
+            const tiempoDet = t > 0 ? t : 1e-6;
+            const acelMedia = v0 / tiempoDet;
+            const errRelPct = (maxErr / v0) * 100;
+            const seguro = x4 <= 6.5;
+
+            return {
+                ok: true,
+                escenario: p.escenario,
+                resumen: {
+                    tiempo_detencion_s: Number(tiempoDet.toFixed(3)),
+                    distancia_frenado_m: Number(x4.toFixed(3)),
+                    desaceleracion_media_ms2: Number(acelMedia.toFixed(3)),
+                    error_relativo_max_pct: Number(errRelPct.toFixed(5)),
+                    iteraciones_totales: iter,
+                    seguro_en_anden: seguro
+                },
+                iteraciones,
+                conclusion_numerica: `En ${p.escenario} con Δt = ${dt} s, RK4 ejecutó ${iter} pasos con error relativo máximo frente a RK2 de ${errRelPct.toFixed(4)}%.`,
+                conclusion_problema: `La cabina se detiene en ${tiempoDet.toFixed(2)} s recorriendo ${x4.toFixed(2)} m (desaceleración media de ${acelMedia.toFixed(2)} m/s²). ${seguro ? "Dentro del margen de 6.50 m en andén." : "Supera el margen de 6.50 m en andén."}`
+            };
+        }
+
+        function ejecutarSimulacion() {
+            const errBox = document.getElementById("msg-error");
+            errBox.classList.add("hidden");
+            errBox.textContent = "";
+
+            const payload = {
+                escenario: document.getElementById("escenario").value,
+                masa_kg: parseFloat(document.getElementById("masa_kg").value),
+                velocidad_inicial_ms: parseFloat(document.getElementById("velocidad_inicial_ms").value),
+                angulo_deg: parseFloat(document.getElementById("angulo_deg").value),
+                fuerza_freno_n: parseFloat(document.getElementById("fuerza_freno_n").value),
+                dt: parseFloat(document.getElementById("dt").value),
+                perturbacion_pct: parseFloat(document.getElementById("perturbacion_pct").value),
+                observacion: document.getElementById("observacion").value.trim()
+            };
+
+            const res = calcularRK2yRK4(payload);
+            if (!res.ok) {
+                errBox.textContent = res.error;
+                errBox.classList.remove("hidden");
+                return;
+            }
+
+            renderResultados(res, payload);
+            guardarHistorial(res, payload);
+        }
+
+        function renderResultados(data, payload) {
+            const r = data.resumen;
+            document.getElementById("lbl-escenario").textContent = data.escenario;
+            document.getElementById("lbl-iters").textContent = r.iteraciones_totales;
+            document.getElementById("lbl-estado-anden").textContent = r.seguro_en_anden ? "Margen andén: OK (≤ 6.50 m)" : "Margen andén: ALERTA (> 6.50 m)";
+
+            document.getElementById("metric-tiempo").textContent = `${r.tiempo_detencion_s.toFixed(2)} s`;
+            document.getElementById("metric-acel").textContent = `Desaceleración media: ${r.desaceleracion_media_ms2.toFixed(2)} m/s²`;
+
+            document.getElementById("metric-distancia").textContent = `${r.distancia_frenado_m.toFixed(2)} m`;
+            document.getElementById("metric-margen").textContent = r.seguro_en_anden ? "Dentro del límite de 6.50 m" : "Excede el límite de 6.50 m";
+
+            document.getElementById("metric-error").textContent = `${r.error_relativo_max_pct.toFixed(4)} %`;
+            document.getElementById("metric-dt").textContent = `Paso Δt: ${payload.dt} s`;
+
+            document.getElementById("texto-num").textContent = data.conclusion_numerica;
+            document.getElementById("texto-prob").textContent = data.conclusion_problema;
+
+            const tbody = document.getElementById("tabla-body");
+            tbody.innerHTML = data.iteraciones.map(row => `
+                <tr class="hover:bg-blue-100/50">
+                    <td class="px-4 py-2 font-mono">${row.iteracion}</td>
+                    <td class="px-4 py-2">${row.tiempo_s.toFixed(3)}</td>
+                    <td class="px-4 py-2">${row.vel_rk2_ms.toFixed(4)}</td>
+                    <td class="px-4 py-2 font-semibold text-blue-900">${row.vel_rk4_ms.toFixed(4)}</td>
+                    <td class="px-4 py-2">${row.pos_rk4_m.toFixed(3)}</td>
+                    <td class="px-4 py-2 font-mono text-indigo-900">${row.error_abs.toExponential(2)}</td>
+                </tr>
+            `).join("");
+
+            const labels = data.iteraciones.map(x => `${x.tiempo_s.toFixed(2)}s`);
+            const v2Arr = data.iteraciones.map(x => x.vel_rk2_ms);
+            const v4Arr = data.iteraciones.map(x => x.vel_rk4_ms);
+            const errArr = data.iteraciones.map(x => x.error_abs);
+
+            if (chartVel) chartVel.destroy();
+            chartVel = new Chart(document.getElementById("graficaVelocidad").getContext("2d"), {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [
+                        { label: "RK4 (m/s)", data: v4Arr, borderColor: "#1d4ed8", backgroundColor: "rgba(29, 78, 216, 0.12)", borderWidth: 2, tension: 0.2 },
+                        { label: "RK2 (m/s)", data: v2Arr, borderColor: "#0284c7", borderDash: [5, 5], borderWidth: 2, tension: 0.2 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            if (chartErr) chartErr.destroy();
+            chartErr = new Chart(document.getElementById("graficaError").getContext("2d"), {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [
+                        { label: "Error Abs |v_RK4 - v_RK2|", data: errArr, borderColor: "#4f46e5", backgroundColor: "rgba(79, 70, 229, 0.15)", fill: true, borderWidth: 2 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function guardarHistorial(data, payload) {
+            try {
+                const items = JSON.parse(localStorage.getItem(HISTORIAL_KEY) || "[]");
+                items.unshift({
+                    hora: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+                    escenario: data.escenario,
+                    tiempo: data.resumen.tiempo_detencion_s,
+                    distancia: data.resumen.distancia_frenado_m,
+                    error_pct: data.resumen.error_relativo_max_pct,
+                    observacion: payload.observacion || "Ejecución registrada",
+                    payload
+                });
+                localStorage.setItem(HISTORIAL_KEY, JSON.stringify(items.slice(0, 12)));
+                renderHistorial();
+            } catch (_) {}
+        }
+
+        function renderHistorial() {
+            const tbody = document.getElementById("historial-body");
+            if (!tbody) return;
+            const items = JSON.parse(localStorage.getItem(HISTORIAL_KEY) || "[]");
+            if (!items.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-4 text-center text-slate-600">Sin ejecuciones registradas aún.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = items.map((it, idx) => `
+                <tr class="hover:bg-blue-100/50">
+                    <td class="px-4 py-2 font-mono text-slate-700">${it.hora}</td>
+                    <td class="px-4 py-2 font-bold text-blue-950">${it.escenario}</td>
+                    <td class="px-4 py-2">${Number(it.tiempo).toFixed(2)} s</td>
+                    <td class="px-4 py-2">${Number(it.distancia).toFixed(2)} m</td>
+                    <td class="px-4 py-2 font-mono">${Number(it.error_pct).toFixed(4)} %</td>
+                    <td class="px-4 py-2 text-slate-700">${it.observacion}</td>
+                    <td class="px-4 py-2">
+                        <button type="button" onclick="repetirSimulacion(${idx})" class="text-blue-800 hover:underline font-semibold">Repetir</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function repetirSimulacion(idx) {
+            const items = JSON.parse(localStorage.getItem(HISTORIAL_KEY) || "[]");
+            const item = items[idx];
+            if (!item || !item.payload) return;
+            const p = item.payload;
+            marcarEscenarioUI(p.escenario);
+            document.getElementById("masa_kg").value = p.masa_kg;
+            document.getElementById("velocidad_inicial_ms").value = p.velocidad_inicial_ms;
+            document.getElementById("angulo_deg").value = p.angulo_deg;
+            document.getElementById("fuerza_freno_n").value = p.fuerza_freno_n;
+            document.getElementById("dt").value = p.dt;
+            document.getElementById("perturbacion_pct").value = p.perturbacion_pct;
+            document.getElementById("observacion").value = p.observacion || "";
+            ejecutarSimulacion();
+        }
+
+        function limpiarHistorial() {
+            localStorage.removeItem(HISTORIAL_KEY);
+            renderHistorial();
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            renderHistorial();
+            seleccionarEscenario("NORMAL");
+        });
+    </script>
+</body>
+</html>
