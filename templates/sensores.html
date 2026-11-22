@@ -1,0 +1,613 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMTELE-RISK | Dashboard de Sensores</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/sensores.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- BARRA LATERAL -->
+    <aside class="sidebar">
+        <div class="marca">
+            <div class="marca-icono">S</div>
+            <div>
+                <strong>SIMTELE-RISK</strong>
+                <small>Plataforma de análisis</small>
+            </div>
+        </div>
+
+        <div class="menu-titulo">MÓDULO 04</div>
+
+        <nav class="menu">
+            <a href="#dashboard" class="menu-link activo" data-seccion="dashboard">
+                <span>▦</span> Dashboard
+            </a>
+            <a href="#sensores" class="menu-link" data-seccion="sensores">
+                <span>◉</span> Sensores
+            </a>
+            <a href="#senales" class="menu-link" data-seccion="senales">
+                <span>∿</span> Señales
+            </a>
+            <a href="#reconstruccion" class="menu-link" data-seccion="reconstruccion">
+                <span>⌁</span> Reconstrucción
+            </a>
+            <a href="#resultados" class="menu-link" data-seccion="resultados">
+                <span>▤</span> Resultados
+            </a>
+            <a href="#historial" class="menu-link" data-seccion="historial">
+                <span>◷</span> Historial
+            </a>
+            
+        </nav>
+
+        <div class="sidebar-inferior">
+            <div class="estado-sistema">
+                <span class="punto-verde"></span>
+                Sistema conectado
+            </div>
+            <a href="/" class="volver-inicio">← Volver al inicio</a>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="contenido">
+
+        <header class="barra-superior">
+            <div>
+                <span class="ruta">SIMTELE-RISK / Módulo 04</span>
+                <h1>Gestión y reconstrucción de sensores</h1>
+            </div>
+            <div class="usuario">
+                <div class="avatar">M4</div>
+                <div>
+                    <strong>Módulo de sensores</strong>
+                    <small>Procesamiento numérico</small>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="panel seccion-panel">
+            <div class="titulo-seccion">
+                <div>
+                    <span class="subtitulo">VISTA GENERAL</span>
+                    <h2>Dashboard principal</h2>
+                    <p>Resumen del estado de los sensores y reconstrucciones.</p>
+                </div>
+                <button class="boton boton-claro" id="actualizarDashboard">
+                    ↻ Actualizar datos
+                </button>
+            </div>
+
+            <div class="tarjetas-resumen">
+                <article class="tarjeta-resumen">
+                    <div class="tarjeta-icono azul">◉</div>
+                    <div>
+                        <span>Sensores registrados</span>
+                        <strong id="totalSensores">0</strong>
+                    </div>
+                </article>
+
+                <article class="tarjeta-resumen">
+                    <div class="tarjeta-icono morado">∿</div>
+                    <div>
+                        <span>Señales registradas</span>
+                        <strong id="totalSenales">0</strong>
+                    </div>
+                </article>
+
+                <article class="tarjeta-resumen">
+                    <div class="tarjeta-icono verde">⌁</div>
+                    <div>
+                        <span>Reconstrucciones</span>
+                        <strong id="totalReconstrucciones">0</strong>
+                    </div>
+                </article>
+
+                <article class="tarjeta-resumen">
+                    <div class="tarjeta-icono naranja">✓</div>
+                    <div>
+                        <span>Último estado</span>
+                        <strong class="texto-estado" id="ultimoEstado">Sin datos</strong>
+                    </div>
+                </article>
+            </div>
+
+            <div class="dos-columnas">
+                <article class="tarjeta">
+                    <div class="encabezado-tarjeta">
+                        <div>
+                            <h3>Reconstrucciones recientes</h3>
+                            <p>Últimas ejecuciones almacenadas.</p>
+                        </div>
+                        <button class="enlace-boton" data-ir="historial">
+                            Ver historial →
+                        </button>
+                    </div>
+
+                    <div class="tabla-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Sensor</th>
+                                    <th>Señal</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaRecientes">
+                                <tr>
+                                    <td colspan="5">Cargando información...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article class="tarjeta">
+                    <div class="encabezado-tarjeta">
+                        <div>
+                            <h3>Distribución de errores</h3>
+                            <p>RMSE por método numérico.</p>
+                        </div>
+                    </div>
+                    <div class="grafico grafico-pequeno">
+                        <canvas id="graficaDashboard"></canvas>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- SENSORES -->
+        <section id="sensores" class="panel seccion-panel">
+            <div class="titulo-seccion">
+                <div>
+                    <span class="subtitulo">GESTIÓN DE DISPOSITIVOS</span>
+                    <h2>Sensores</h2>
+                    <p>Registra y consulta los sensores asociados al sistema.</p>
+                </div>
+            </div>
+
+            <div class="dos-columnas">
+                <article class="tarjeta">
+                    <h3>Registrar nuevo sensor</h3>
+                    <p class="texto-ayuda">Completa los datos del dispositivo.</p>
+
+                    <form id="formSensor">
+                        <div class="campo">
+                            <label for="sensorCodigo">Código *</label>
+                            <input id="sensorCodigo" required
+                                   placeholder="Ej. SEN-002">
+                        </div>
+
+                        <div class="campo">
+                            <label for="sensorNombre">Nombre *</label>
+                            <input id="sensorNombre" required
+                                   placeholder="Ej. Sensor de temperatura">
+                        </div>
+
+                        <div class="campo">
+                            <label for="sensorTipo">Tipo</label>
+                            <input id="sensorTipo" placeholder="Temperatura, vibración...">
+                        </div>
+
+                        <div class="campo">
+                            <label for="sensorUbicacion">Ubicación</label>
+                            <input id="sensorUbicacion" placeholder="Ubicación física">
+                        </div>
+
+                        <div class="campo">
+                            <label for="sensorUnidad">Unidad de medida *</label>
+                            <input id="sensorUnidad" required placeholder="°C, mm/s, Pa...">
+                        </div>
+
+                        <div class="campo">
+                            <label for="sensorDescripcion">Descripción</label>
+                            <textarea id="sensorDescripcion" rows="3"></textarea>
+                        </div>
+
+                        <button class="boton boton-principal" type="submit">
+                            + Registrar sensor
+                        </button>
+                    </form>
+
+                    <div id="mensajeSensor" class="mensaje"></div>
+                </article>
+
+                <article class="tarjeta">
+                    <div class="encabezado-tarjeta">
+                        <div>
+                            <h3>Sensores registrados</h3>
+                            <p>Información almacenada en PostgreSQL.</p>
+                        </div>
+                        <button class="boton boton-claro" id="recargarSensores">
+                            Actualizar
+                        </button>
+                    </div>
+
+                    <div class="lista-sensores" id="listaSensores">
+                        <p>Cargando sensores...</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- SEÑALES -->
+        <section id="senales" class="panel seccion-panel">
+            <div class="titulo-seccion">
+                <div>
+                    <span class="subtitulo">GESTIÓN DE MEDICIONES</span>
+                    <h2>Señales</h2>
+                    <p>Registra señales, mediciones conocidas y valores de referencia.</p>
+                </div>
+            </div>
+
+            <div class="dos-columnas">
+                <article class="tarjeta">
+                    <h3>Registrar nueva señal</h3>
+                    <p class="texto-ayuda">Selecciona el sensor al que pertenece.</p>
+
+                    <form id="formSenal">
+                        <div class="campo">
+                            <label for="sensorParaSenal">Sensor *</label>
+                            <select id="sensorParaSenal" required>
+                                <option value="">Selecciona un sensor</option>
+                            </select>
+                        </div>
+
+                        <div class="campo">
+                            <label for="senalNombre">Nombre de la señal *</label>
+                            <input id="senalNombre" required
+                                   placeholder="Ej. Vibración inicial">
+                        </div>
+
+                        <div class="campo">
+                            <label for="senalOrigen">Origen</label>
+                            <input id="senalOrigen" value="REGISTRO_MANUAL">
+                        </div>
+
+                        <div class="campo">
+                            <label for="senalDescripcion">Descripción</label>
+                            <textarea id="senalDescripcion" rows="2"></textarea>
+                        </div>
+
+                        <div class="campo">
+                            <label for="senalPuntos">Mediciones conocidas *</label>
+                            <textarea id="senalPuntos" rows="6"
+                                placeholder="tiempo,valor&#10;0,0&#10;1,0.8415&#10;3,0.1411&#10;4,-0.7568"></textarea>
+                            <small>Una medición por línea, formato: tiempo,valor.</small>
+                        </div>
+
+                        <div class="campo">
+                            <label for="senalReferencias">Valores reales de referencia</label>
+                            <textarea id="senalReferencias" rows="4"
+                                placeholder="tiempo,valor_real&#10;2,0.9093&#10;5,-0.9589"></textarea>
+                            <small>Opcional. Se usan para evaluar los errores.</small>
+                        </div>
+
+                        <button class="boton boton-principal" type="submit">
+                            + Registrar señal
+                        </button>
+                    </form>
+
+                    <div id="mensajeSenal" class="mensaje"></div>
+                </article>
+
+                <article class="tarjeta">
+                    <h3>Consultar señales</h3>
+
+                    <div class="campo">
+                        <label for="sensorConsultaSenales">Selecciona un sensor</label>
+                        <select id="sensorConsultaSenales">
+                            <option value="">Selecciona un sensor</option>
+                        </select>
+                    </div>
+
+                    <div id="listaSenales" class="lista-senales">
+                        <p>Selecciona un sensor para consultar sus señales.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- RECONSTRUCCIÓN -->
+        <section id="reconstruccion" class="panel seccion-panel">
+            <div class="titulo-seccion">
+                <div>
+                    <span class="subtitulo">PROCESAMIENTO NUMÉRICO</span>
+                    <h2>Reconstrucción de señales</h2>
+                    <p>Estima mediciones faltantes utilizando tres métodos de interpolación.</p>
+                </div>
+            </div>
+
+            <article class="tarjeta informacion-matematica">
+                <h3>Modelo matemático y supuestos</h3>
+
+                <p>
+                    El objetivo es estimar valores desconocidos de una señal
+                    a partir de mediciones conocidas.
+                </p>
+
+                <div class="modelo-formulas">
+                    <div>
+                        <strong>Interpolación de Lagrange</strong>
+                        <p>
+                            P(x) = Σ yᵢ Lᵢ(x)
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong>Interpolación de Newton</strong>
+                        <p>
+                            P(x) = f[x₀] + Σ f[x₀,...,xᵢ] Π(x - xⱼ)
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong>Splines cúbicos</strong>
+                        <p>
+                            Sᵢ(x) = aᵢ + bᵢ(x-xᵢ) + cᵢ(x-xᵢ)²
+                            + dᵢ(x-xᵢ)³
+                        </p>
+                    </div>
+                </div>
+
+                <h4>Variables</h4>
+                <ul>
+                    <li><strong>x:</strong> tiempo de medición.</li>
+                    <li><strong>y:</strong> valor registrado por el sensor.</li>
+                    <li><strong>P(x):</strong> valor interpolado.</li>
+                    <li><strong>Sᵢ(x):</strong> polinomio cúbico del intervalo.</li>
+                </ul>
+
+                <h4>Hipótesis de trabajo</h4>
+                <ul>
+                    <li>Los tiempos de medición son distintos.</li>
+                    <li>Los datos se encuentran dentro del intervalo evaluado.</li>
+                    <li>La interpolación estima valores entre mediciones conocidas.</li>
+                    <li>Los escenarios de prueba pueden utilizar datos sintéticos.</li>
+                </ul>
+            </article>
+
+            <article class="tarjeta">
+                <div class="campos-grid">
+                    <div class="campo">
+                        <label for="sensorReconstruccion">Sensor</label>
+                        <select id="sensorReconstruccion">
+                            <option value="">Selecciona un sensor</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="senalReconstruccion">Señal</label>
+                        <select id="senalReconstruccion" disabled>
+                            <option value="">Selecciona primero un sensor</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="escenarioReconstruccion">Escenario</label>
+                        <select id="escenarioReconstruccion">
+                            <option value="">Sin escenario específico</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="puntosEvaluar">Tiempos a reconstruir *</label>
+                        <input id="puntosEvaluar" placeholder="Ej. 2,5">
+                        <small>Separados por comas. Deben estar dentro del intervalo conocido.</small>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="observacionReconstruccion">Observación</label>
+                    <input id="observacionReconstruccion"
+                           placeholder="Descripción de la ejecución">
+                </div>
+
+                <div id="detalleSenalSeleccionada" class="bloque-informacion">
+                    Selecciona una señal para consultar sus mediciones.
+                </div>
+
+                <div class="metodos">
+                    <div class="metodo-card">
+                        <span class="metodo-numero">01</span>
+                        <h3>Lagrange</h3>
+                        <p>Interpolación polinómica mediante bases de Lagrange.</p>
+                    </div>
+
+                    <div class="metodo-card">
+                        <span class="metodo-numero">02</span>
+                        <h3>Newton</h3>
+                        <p>Interpolación basada en diferencias divididas.</p>
+                    </div>
+
+                    <div class="metodo-card">
+                        <span class="metodo-numero">03</span>
+                        <h3>Splines cúbicos</h3>
+                        <p>Aproximación por polinomios cúbicos por intervalos.</p>
+                    </div>
+                </div>
+
+                <button id="ejecutarReconstruccion"
+                        class="boton boton-principal boton-ejecutar">
+                    Ejecutar reconstrucción
+                </button>
+
+                <div id="estadoReconstruccion" class="mensaje">
+                    Esperando selección de una señal.
+                </div>
+            </article>
+        </section>
+
+        <!-- RESULTADOS -->
+        <section id="resultados" class="panel seccion-panel">
+            <div class="titulo-seccion">
+                <div>
+                    <span class="subtitulo">ANÁLISIS DE RESULTADOS</span>
+                    <h2>Resultados</h2>
+                    <p>Comparación de estimaciones, métricas y curvas reconstruidas.</p>
+                </div>
+            </div>
+
+            <div id="identificadorReconstruccion" class="bloque-informacion">
+                Todavía no se ha ejecutado ninguna reconstrucción.
+            </div>
+
+            <div class="tarjetas-metricas">
+                <article class="metrica">
+                    <span>RMSE · Lagrange</span>
+                    <strong id="rmseLagrange">—</strong>
+                    <small id="maeLagrange">MAE: —</small>
+                </article>
+
+                <article class="metrica">
+                    <span>RMSE · Newton</span>
+                    <strong id="rmseNewton">—</strong>
+                    <small id="maeNewton">MAE: —</small>
+                </article>
+
+                <article class="metrica">
+                    <span>RMSE · Splines</span>
+                    <strong id="rmseSplines">—</strong>
+                    <small id="maeSplines">MAE: —</small>
+                </article>
+            </div>
+
+
+            <div class="dos-columnas">
+                <article class="tarjeta">
+                    <h3>Análisis de mal condicionamiento</h3>
+                    <div id="analisisMalCondicionado">
+                        <p>
+                            Este análisis estará disponible al ejecutar
+                            el escenario MAL CONDICIONADO.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="tarjeta">
+                    <h3>Conclusión numérica</h3>
+                    <div id="conclusionNumerica">
+                        Todavía no hay una conclusión numérica.
+                    </div>
+                </article>
+            </div>
+
+            <article class="tarjeta">
+                <h3>Conclusión del problema</h3>
+                <div id="conclusionProblema">
+                    Todavía no hay una conclusión del problema.
+                </div>
+            </article>
+
+
+            <article class="tarjeta">
+                <h3>Tabla comparativa</h3>
+                <p class="texto-ayuda">
+                    Los errores se muestran cuando existen valores reales de referencia.
+                </p>
+
+                <div class="tabla-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tiempo</th>
+                                <th>Valor real</th>
+                                <th>Lagrange</th>
+                                <th>Newton</th>
+                                <th>Splines</th>
+                                <th>Error Lagrange</th>
+                                <th>Error Newton</th>
+                                <th>Error Splines</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaResultados">
+                            <tr>
+                                <td colspan="8">Todavía no hay resultados.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <div class="dos-columnas">
+                <article class="tarjeta">
+                    <h3>Reconstrucción de la señal</h3>
+                    <div class="grafico">
+                        <canvas id="graficaReconstruccion"></canvas>
+                    </div>
+                </article>
+
+                <article class="tarjeta">
+                    <h3>Comparación de errores</h3>
+                    <div class="grafico">
+                        <canvas id="graficaErrores"></canvas>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- HISTORIAL -->
+        <section id="historial" class="panel seccion-panel">
+            <div class="titulo-seccion">
+                <div>
+                    <span class="subtitulo">REGISTRO DE EJECUCIONES</span>
+                    <h2>Historial de reconstrucciones</h2>
+                    <p>Consulta las reconstrucciones guardadas en la base de datos.</p>
+                </div>
+                <button class="boton boton-claro" id="actualizarHistorial">
+                    ↻ Actualizar historial
+                </button>
+            </div>
+
+            <article class="tarjeta">
+                <div class="tabla-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Sensor</th>
+                                <th>Señal</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaHistorial">
+                            <tr>
+                                <td colspan="6">Cargando historial...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="tarjeta detalle-historial" id="detalleHistorial">
+                <h3>Detalle de reconstrucción</h3>
+                <p>Selecciona una reconstrucción del historial para consultar sus datos.</p>
+            </article>
+        </section>
+
+        <footer class="pie">
+            SIMTELE-RISK · Módulo 04 · Reconstrucción numérica de señales
+        </footer>
+
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/sensores.js') }}"></script>
+
+</body>
+</html>

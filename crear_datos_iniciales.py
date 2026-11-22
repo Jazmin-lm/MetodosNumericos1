@@ -121,6 +121,62 @@ with app.app_context():
             existe.parametros_json = datos["parametros_json"]
             existe.fuente_datos = datos["fuente_datos"]
 
+
+    # ==========================================
+    # 5. ESCENARIOS DEL MODULO DE SENSORES
+    # ==========================================
+
+    caso_sensores = CasoEstudio.query.filter_by(
+        modulo="sensores"
+    ).first()
+
+    escenarios_sensores = [
+        {
+            "tipo": "NORMAL",
+            "parametros_json": {
+                "descripcion": "Señal con mediciones regulares y perturbación baja.",
+                "nivel_ruido": 0.0,
+                "tipo_prueba": "interpolacion"
+            },
+            "fuente_datos": "Datos de prueba - sensores normal"
+        },
+        {
+            "tipo": "ESTRES",
+            "parametros_json": {
+                "descripcion": "Señal con mediciones perturbadas.",
+                "nivel_ruido": 0.05,
+                "tipo_prueba": "interpolacion"
+            },
+            "fuente_datos": "Datos de prueba - sensores estres"
+        },
+        {
+            "tipo": "MAL_CONDICIONADO",
+            "parametros_json": {
+                "descripcion": "Señal de Runge para analizar sensibilidad numérica.",
+                "nivel_ruido": 0.0,
+                "tipo_prueba": "runge"
+            },
+            "fuente_datos": "Función de Runge - prueba de interpolación"
+        }
+    ]
+
+    for datos in escenarios_sensores:
+        existente = Escenario.query.filter_by(
+            caso_id=caso_sensores.id,
+            tipo=datos["tipo"]
+        ).first()
+
+        if existente:
+            existente.parametros_json = datos["parametros_json"]
+            existente.fuente_datos = datos["fuente_datos"]
+        else:
+            db.session.add(Escenario(
+                caso_id=caso_sensores.id,
+                tipo=datos["tipo"],
+                parametros_json=datos["parametros_json"],
+                fuente_datos=datos["fuente_datos"]
+            ))
+
     # ==========================================
     # 5. GUARDAR CAMBIOS
     # ==========================================

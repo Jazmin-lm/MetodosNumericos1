@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de sensores | SIMTELE-RISK</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/gestion_sensores.css') }}">
+</head>
+<body>
+<header class="encabezado">
+    <div class="logo">SIMTELE-RISK</div>
+    <nav>
+        <a href="/">Inicio</a>
+        <a href="/sensores">Reconstrucción</a>
+        <a href="/sensores/gestion" class="activo">Gestión de sensores</a>
+        <a href="/historial">Historial</a>
+    </nav>
+</header>
+
+<main class="contenedor">
+    <section class="introduccion">
+        <span class="etiqueta">MÓDULO 04 · ADMINISTRACIÓN</span>
+        <h1>Gestión de sensores</h1>
+        <p>
+            Registra sensores, modifica sus datos y controla su estado.
+            Los cambios se guardan en la base de datos del sistema.
+        </p>
+    </section>
+
+    <section class="panel">
+        <div class="titulo-panel">
+            <div>
+                <h2 id="tituloFormulario">Registrar nuevo sensor</h2>
+                <p>Completa los datos técnicos del dispositivo.</p>
+            </div>
+            <span class="icono-panel">＋</span>
+        </div>
+
+        <form id="formSensor">
+            <input type="hidden" id="sensorId">
+
+            <div class="campos">
+                <div class="campo">
+                    <label for="codigo">Código *</label>
+                    <input id="codigo" name="codigo" maxlength="50"
+                           required placeholder="Ej. SEN-TEMP-001">
+                </div>
+
+                <div class="campo">
+                    <label for="nombre">Nombre *</label>
+                    <input id="nombre" name="nombre" maxlength="100"
+                           required placeholder="Ej. Sensor de temperatura">
+                </div>
+
+                <div class="campo">
+                    <label for="tipo">Tipo de sensor</label>
+                    <input id="tipo" name="tipo" maxlength="50"
+                           placeholder="Ej. Temperatura, vibración">
+                </div>
+
+                <div class="campo">
+                    <label for="ubicacion">Ubicación</label>
+                    <input id="ubicacion" name="ubicacion" maxlength="150"
+                           placeholder="Ej. Estación central">
+                </div>
+
+                <div class="campo">
+                    <label for="unidad">Unidad de medida *</label>
+                    <input id="unidad" name="unidad_medida" maxlength="30"
+                           required placeholder="Ej. °C, mm/s, m">
+                </div>
+
+                <div class="campo campo-completo">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" name="descripcion" rows="3"
+                              placeholder="Descripción técnica y observaciones del sensor"></textarea>
+                </div>
+            </div>
+
+            <div class="acciones">
+                <button type="submit" class="boton-principal" id="btnGuardar">
+                    Registrar sensor
+                </button>
+                <button type="button" class="boton-secundario"
+                        id="btnCancelar" hidden>
+                    Cancelar edición
+                </button>
+            </div>
+
+            <p id="mensajeFormulario" class="mensaje" aria-live="polite"></p>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="titulo-panel">
+            <div>
+                <h2>Sensores registrados</h2>
+                <p>Consulta, edita o cambia el estado de cada sensor.</p>
+            </div>
+            <button type="button" class="boton-secundario"
+                    id="btnActualizar">
+                Actualizar lista
+            </button>
+        </div>
+
+        <div class="resumen">
+            <article class="resumen-item">
+                <span>Total de sensores</span>
+                <strong id="totalSensores">0</strong>
+            </article>
+            <article class="resumen-item">
+                <span>Activos</span>
+                <strong id="sensoresActivos">0</strong>
+            </article>
+            <article class="resumen-item">
+                <span>Inactivos</span>
+                <strong id="sensoresInactivos">0</strong>
+            </article>
+        </div>
+
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Ubicación</th>
+                        <th>Unidad</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaSensores">
+                    <tr>
+                        <td colspan="7">Cargando sensores...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p id="estadoLista" class="mensaje" aria-live="polite"></p>
+    </section>
+</main>
+
+<footer>
+    <p>SIMTELE-RISK | Módulo 4 · Reconstrucción de señales de sensores</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/gestion_sensores.js') }}"></script>
+</body>
+</html>
