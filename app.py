@@ -8,9 +8,9 @@ from backend.metodos.sistemas_lineales import (
     ejecutar_escenario,
     generar_sistema_escenario
 )
-# Importación del módulo de sensores
+# Importación de los módulos de sensores y detención
 from backend.modulos.sensores import reconstruir_senal
-
+from backend.modulos.detencion import simular_detencion
 # Importación de configuración y extensiones
 from config import Config
 from extensions import db, migrate
@@ -103,6 +103,18 @@ def inicio():
 def detencion():
     return render_template("detencion.html")
 
+@app.route("/api/detencion/simular", methods=["POST"])
+def api_detencion_simular():
+    try:
+        datos = request.get_json(silent=True) or {}
+        resultado = simular_detencion(datos)
+        status_code = 200 if resultado.get("ok") else 400
+        return jsonify(resultado), status_code
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": str(e)
+        }), 500
 
 @app.route("/deterioro")
 def deterioro():
