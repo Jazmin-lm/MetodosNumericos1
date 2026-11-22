@@ -10,5 +10,6 @@ from models.generales import (
 
 from models.modulo2.deterioro import (
     ComponenteMecanico,
-    MedicionDeterioro
+    MedicionDeterioro,
+    AnalisisRaices
 )

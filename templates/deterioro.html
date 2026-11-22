@@ -34,7 +34,6 @@
             <p>Análisis y mantenimiento</p>
         </div>
 
-        <nav class="menu">
 
 <nav class="menu">
 
@@ -570,19 +569,547 @@
         
 <!-- SECCIONES DE MÉTODOS NUMÉRICOS -->
 
+
+<!-- ==========================================
+     SISTEMAS LINEALES
+========================================== -->
+
 <section id="sistemas-lineales" class="seccion oculto">
 
-    <!-- Aquí implementaremos Jacobi, Gauss-Seidel,
-         LU y Gradiente Conjugado -->
+    <div class="encabezado-seccion">
+        <div>
+            <span class="etiqueta-seccion">MÉTODOS NUMÉRICOS</span>
+            <h2>Resolución de sistemas lineales</h2>
+            <p>
+                Comparación de métodos iterativos y directos
+                para estimar los parámetros del modelo de deterioro.
+            </p>
+        </div>
+    </div>
+
+    <!-- INFORMACIÓN -->
+    <div class="tarjeta-informacion">
+        <h3>¿Qué se analizará?</h3>
+        <p>
+            Se resolverán sistemas de ecuaciones lineales mediante
+            Jacobi, Gauss-Seidel, LU y Gradiente Conjugado.
+            Se evaluará la precisión, convergencia y rendimiento
+            de cada método bajo diferentes condiciones.
+        </p>
+    </div>
+
+    <!-- SELECCIÓN DEL ESCENARIO -->
+    <div class="tarjeta-sistemas">
+
+        <div class="titulo-tarjeta">
+            <div>
+                <h3>1. Selección del escenario</h3>
+                <p>Selecciona las condiciones del problema que deseas evaluar.</p>
+            </div>
+        </div>
+
+        <div class="contenedor-escenarios">
+
+            <label class="opcion-escenario">
+                <input
+                    type="radio"
+                    name="escenario-sistema"
+                    value="NORMAL"
+                    checked
+                >
+                <div class="contenido-escenario">
+                    <span class="indicador-escenario normal"></span>
+                    <h4>NORMAL</h4>
+                    <p>Condiciones habituales y estables.</p>
+                </div>
+            </label>
+
+            <label class="opcion-escenario">
+                <input
+                    type="radio"
+                    name="escenario-sistema"
+                    value="ESTRES"
+                >
+                <div class="contenido-escenario">
+                    <span class="indicador-escenario estres"></span>
+                    <h4>ESTRÉS</h4>
+                    <p>Condiciones computacionales exigentes.</p>
+                </div>
+            </label>
+
+            <label class="opcion-escenario">
+                <input
+                    type="radio"
+                    name="escenario-sistema"
+                    value="MAL_CONDICIONADO"
+                >
+                <div class="contenido-escenario">
+                    <span class="indicador-escenario mal-condicionado"></span>
+                    <h4>MAL CONDICIONADO</h4>
+                    <p>Alta sensibilidad ante perturbaciones.</p>
+                </div>
+            </label>
+
+        </div>
+
+    </div>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="tarjeta-sistemas">
+
+        <div class="titulo-tarjeta">
+            <div>
+                <h3>2. Parámetros de ejecución</h3>
+                <p>Configura los criterios de cálculo.</p>
+            </div>
+        </div>
+
+        <div class="formulario-sistemas">
+
+            <div class="campo-sistema">
+                <label for="tolerancia-sistema">
+                    Tolerancia
+                </label>
+                <input
+                    type="number"
+                    id="tolerancia-sistema"
+                    value="0.000001"
+                    min="0.000000001"
+                    step="any"
+                >
+                <small>Precisión requerida para la convergencia.</small>
+            </div>
+
+            <div class="campo-sistema">
+                <label for="max-iter-sistema">
+                    Máximo de iteraciones
+                </label>
+                <input
+                    type="number"
+                    id="max-iter-sistema"
+                    value="100"
+                    min="1"
+                    step="1"
+                >
+                <small>Límite de iteraciones para los métodos iterativos.</small>
+            </div>
+
+        </div>
+
+        <button
+            type="button"
+            id="btn-ejecutar-sistemas"
+            class="btn-principal"
+        >
+            Ejecutar métodos numéricos
+        </button>
+
+        <div id="mensaje-sistemas" class="mensaje-sistemas"></div>
+
+    </div>
+
+    <!-- DATOS DEL SISTEMA -->
+    <div class="tarjeta-sistemas oculto" id="contenedor-datos-sistema">
+
+        <div class="titulo-tarjeta">
+            <div>
+                <h3>3. Sistema de ecuaciones</h3>
+                <p>Matriz de coeficientes y vector independiente.</p>
+            </div>
+        </div>
+
+        <div id="datos-matriz-sistema"></div>
+
+    </div>
+
+    <!-- RESULTADOS -->
+ 
+<div id="contenedor-resultados-sistema" class="panel-resultados oculto">
+
+    <!-- RESUMEN DE LA SIMULACIÓN -->
+    <div id="resumen-sistemas"></div>
+
+    <!-- GRÁFICOS COMPARATIVOS -->
+    <div class="graficos-comparacion-sistemas">
+
+        <!-- GRÁFICO DE TIEMPO -->
+        <div class="grafico-sistema">
+            <div class="encabezado-grafico-sistema">
+                <div>
+                    <h4>Tiempo de ejecución</h4>
+                    <p>Comparación del rendimiento computacional.</p>
+                </div>
+                <span>Milisegundos (ms)</span>
+            </div>
+
+            <div class="canvas-sistema">
+                <canvas id="grafico-tiempo-sistemas"></canvas>
+            </div>
+        </div>
+
+        <!-- GRÁFICO DE ERROR -->
+        <div class="grafico-sistema">
+            <div class="encabezado-grafico-sistema">
+                <div>
+                    <h4>Error absoluto</h4>
+                    <p>Comparación de la precisión de los métodos.</p>
+                </div>
+                <span>Error numérico</span>
+            </div>
+
+            <div class="canvas-sistema">
+                <canvas id="grafico-error-sistemas"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TABLA DE RESULTADOS -->
+    <div class="tabla-responsive">
+        <table class="tabla-resultados">
+            <thead>
+                <tr>
+                    <th>Método</th>
+                    <th>Convergencia</th>
+                    <th>Solución obtenida</th>
+                    <th>Error absoluto</th>
+                    <th>Error relativo</th>
+                    <th>Residuo</th>
+                    <th>Tiempo (ms)</th>
+                </tr>
+            </thead>
+
+            <tbody id="tabla-resultados-sistemas">
+                <tr>
+                    <td colspan="7">
+                        Los resultados aparecerán después de la ejecución.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- HISTORIAL DE ITERACIONES -->
+    <div class="seccion-iteraciones-sistemas">
+
+        <div class="encabezado-iteraciones">
+            <div>
+                <h3>Historial de iteraciones</h3>
+                <p>
+                    Evolución de las aproximaciones de los métodos iterativos.
+                </p>
+            </div>
+        </div>
+
+        <div id="resumen-iteraciones-sistemas"></div>
+
+        <div class="tabla-responsive">
+            <table class="tabla-resultados">
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Iteración</th>
+                        <th>Aproximación</th>
+                        <th>Error</th>
+                        <th>Residuo</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tabla-iteraciones-sistemas">
+                    <tr>
+                        <td colspan="6">
+                            Las iteraciones aparecerán después de ejecutar los métodos.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <!-- ANÁLISIS DE RESULTADOS -->
+    <div class="explicacion-sistemas">
+        <div class="icono-explicacion">ⓘ</div>
+
+        <div>
+                        <div id="texto-interpretacion-grafica">
+                <p>
+                    Aquí se analizará el comportamiento de los métodos,
+                    su precisión, convergencia y rendimiento computacional.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
 
 </section>
+
 
 <section id="raices" class="seccion oculto">
 
-    <!-- Aquí implementaremos Bisección,
-         Newton-Raphson y Secante -->
+    <!-- ENCABEZADO -->
+    <div class="encabezado-seccion">
+        <div>
+            <span class="etiqueta-seccion">ANÁLISIS NUMÉRICO</span>
+            <h2>Búsqueda de raíces</h2>
+            <p>
+                Estimación del tiempo necesario para alcanzar
+                el umbral de deterioro de un componente mecánico.
+            </p>
+        </div>
+    </div>
+
+    <!-- INFORMACIÓN -->
+    <div class="tarjeta-informacion">
+        <h3 class="titulo-tarjeta">Modelo de predicción</h3>
+
+        <p class="texto-explicativo-raices">
+            El sistema utiliza las mediciones históricas del componente
+            para construir automáticamente un modelo cuadrático mediante
+            mínimos cuadrados. Posteriormente, aplica los métodos de
+            Bisección, Newton-Raphson y Secante para estimar cuándo
+            se alcanzará el umbral de inspección.
+        </p>
+
+        <div class="formula-raices">
+            D(t) = D₀ + αt + βt²
+        </div>
+    </div>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="tarjeta-raices">
+
+        <div class="titulo-tarjeta">
+            <h3>Configuración del análisis</h3>
+            <p>Selecciona el componente y establece los parámetros numéricos.</p>
+        </div>
+
+        <div class="configuracion-raices">
+
+            <div class="campo-raices">
+                <label for="componente-raices">
+                    Componente mecánico
+                </label>
+
+                <select id="componente-raices">
+                    <option value="">Selecciona un componente</option>
+                </select>
+
+                <small>
+                    Se utilizarán sus mediciones registradas.
+                </small>
+            </div>
+
+            <div class="campo-raices">
+                <label for="tolerancia-raices">
+                    Tolerancia
+                </label>
+
+                <input
+                    type="number"
+                    id="tolerancia-raices"
+                    value="0.000001"
+                    min="0.000000001"
+                    step="any"
+                >
+
+                <small>
+                    Precisión requerida para la convergencia.
+                </small>
+            </div>
+
+            <div class="campo-raices">
+                <label for="max-iter-raices">
+                    Máximo de iteraciones
+                </label>
+
+                <input
+                    type="number"
+                    id="max-iter-raices"
+                    value="100"
+                    min="1"
+                    step="1"
+                >
+
+                <small>
+                    Límite de iteraciones por método.
+                </small>
+            </div>
+
+        </div>
+
+        <button
+            type="button"
+            class="btn-ejecutar-raices"
+            id="btn-ejecutar-raices"
+        >
+            Ejecutar análisis
+        </button>
+
+        <p id="mensaje-raices" class="mensaje-raices">
+            Selecciona un componente para comenzar.
+        </p>
+
+    </div>
+
+    <!-- RESULTADOS DEL MODELO -->
+    <div id="contenedor-modelo-raices" class="oculto">
+
+        <div class="tarjeta-raices">
+
+            <div class="titulo-tarjeta">
+                <h3>Modelo cuadrático obtenido</h3>
+                <p>Coeficientes calculados a partir de las mediciones.</p>
+            </div>
+
+            <div
+                class="formula-raices"
+                id="formula-obtenida-raices">
+            </div>
+
+            <div class="indicadores-raices">
+
+                <div class="indicador-raices">
+                    <span>D₀</span>
+                    <strong id="valor-d0-raices">--</strong>
+                    <small>Valor inicial</small>
+                </div>
+
+                <div class="indicador-raices">
+                    <span>α</span>
+                    <strong id="valor-alpha-raices">--</strong>
+                    <small>Coeficiente lineal</small>
+                </div>
+
+                <div class="indicador-raices">
+                    <span>β</span>
+                    <strong id="valor-beta-raices">--</strong>
+                    <small>Coeficiente cuadrático</small>
+                </div>
+
+                <div class="indicador-raices">
+                    <span>Error cuadrático</span>
+                    <strong id="error-modelo-raices">--</strong>
+                    <small>Calidad del ajuste</small>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RESULTADOS DE LOS MÉTODOS -->
+    <div id="contenedor-resultados-raices" class="oculto">
+
+        <div class="tarjeta-raices">
+
+            <div class="titulo-tarjeta">
+                <h3>Comparación de métodos numéricos</h3>
+                <p>Resultados de los tres métodos de búsqueda de raíces.</p>
+            </div>
+
+            <div class="tabla-contenedor-raices">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Método</th>
+                            <th>Estado</th>
+                            <th>Tiempo estimado</th>
+                            <th>Deterioro estimado</th>
+                            <th>Error absoluto</th>
+                            <th>Residual</th>
+                            <th>Iteraciones</th>
+                            <th>Tiempo (ms)</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tabla-resultados-raices">
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div class="graficos-raices">
+
+            <div class="grafico-raices">
+                <div class="titulo-tarjeta">
+                    <h3>Comparación del tiempo estimado</h3>
+                    <p>Tiempo calculado por cada método numérico.</p>
+                </div>
+
+                <canvas id="grafico-tiempo-raices"></canvas>
+            </div>
+
+            <div class="grafico-raices">
+                <div class="titulo-tarjeta">
+                    <h3>Convergencia de los métodos</h3>
+                    <p>Evolución del residual durante las iteraciones.</p>
+                </div>
+
+                <canvas id="grafico-error-raices"></canvas>
+            </div>
+
+        </div>
+
+        <!-- INTERPRETACIÓN -->
+        <div class="tarjeta-raices">
+
+            <div class="interpretacion-raices">
+                <h3>Interpretación de resultados</h3>
+
+                <div id="interpretacion-raices">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- HISTORIAL DE ITERACIONES -->
+        <div class="tarjeta-raices">
+
+            <div class="titulo-tarjeta">
+                <h3>Historial de iteraciones</h3>
+                <p>Detalle del procedimiento numérico de cada método.</p>
+            </div>
+
+            <p id="resumen-iteraciones-raices"
+               class="resumen-iteraciones-raices">
+            </p>
+
+            <div class="tabla-contenedor-raices">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Método</th>
+                            <th>Iteración</th>
+                            <th>Aproximación</th>
+                            <th>Error absoluto</th>
+                            <th>Error relativo</th>
+                            <th>Residual</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tabla-iteraciones-raices">
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <p id="resumen-simulacion-raices"
+           class="resumen-iteraciones-raices">
+        </p>
+
+    </div>
 
 </section>
+
+
+
 
 <section id="integracion" class="seccion oculto">
 
@@ -601,11 +1128,81 @@
 
 <section id="historial" class="seccion oculto">
 
-    <!-- Aquí consultaremos y compararemos las simulaciones -->
+    <div class="seccion-encabezado">
+        <div>
+            <h2>Historial de simulaciones</h2>
+            <p>Consulta los análisis numéricos realizados y sus resultados almacenados.</p>
+        </div>
+
+        <button type="button" class="btn-primario" onclick="cargarHistorial()">
+            ↻ Actualizar historial
+        </button>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="tarjetas-resumen">
+
+        <div class="tarjeta-resumen">
+            <span>Total de simulaciones</span>
+            <strong id="historial-total">0</strong>
+        </div>
+
+        <div class="tarjeta-resumen">
+            <span>Simulaciones completadas</span>
+            <strong id="historial-completadas">0</strong>
+        </div>
+
+    </div>
+
+    <!-- MENSAJES -->
+    <div id="mensaje-historial" class="mensaje oculto"></div>
+
+    <!-- TABLA DE SIMULACIONES -->
+    <div class="contenedor-tabla">
+
+        <h3>Registro de análisis</h3>
+
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo de análisis</th>
+                    <th>Escenario</th>
+                    <th>Métodos ejecutados</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody id="tabla-historial">
+                <tr>
+                    <td colspan="6">Cargando historial...</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- DETALLE DE RESULTADOS -->
+    <div id="detalle-historial" class="panel-detalle oculto">
+
+        <div class="seccion-encabezado">
+            <div>
+                <h3>Resultados de la simulación</h3>
+                <p id="detalle-historial-descripcion"></p>
+            </div>
+
+            <button type="button" class="btn-secundario"
+                    onclick="cerrarDetalleHistorial()">
+                Cerrar
+            </button>
+        </div>
+
+        <div id="contenido-detalle-historial"></div>
+
+    </div>
 
 </section>
-
-
         <footer class="pie">
             SIMTELE-RISK · Proyecto académico de Métodos Numéricos
         </footer>

@@ -40,3 +40,26 @@ class MedicionDeterioro(db.Model):
         "ComponenteMecanico",
         back_populates="mediciones"
     )
+class AnalisisRaices(db.Model):
+    __tablename__ = "analisis_raices"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    simulacion_id = db.Column(
+        db.Integer,
+        db.ForeignKey("simulacion.id"),
+        nullable=False
+    )
+
+    componente_id = db.Column(
+        db.Integer,
+        db.ForeignKey("componente_mecanico.id"),
+        nullable=False
+    )
+
+    umbral = db.Column(db.Float, nullable=False)
+
+    parametros_modelo = db.Column(db.JSON, nullable=False)
+
+    componente = db.relationship("ComponenteMecanico")
+    simulacion = db.relationship("Simulacion")

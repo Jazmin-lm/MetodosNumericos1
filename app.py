@@ -5,12 +5,23 @@ import math
 # Importación de métodos numéricos
 from backend.metodos.sistemas_lineales import (
     ejecutar_metodos,
-    ejecutar_escenario
+    ejecutar_escenario,
+    generar_sistema_escenario
 )
 # Importación de configuración y extensiones
 from config import Config
 from extensions import db, migrate
+from time import perf_counter
 
+from backend.metodos.busqueda_raices import (
+    metodo_biseccion,
+    metodo_newton_raphson,
+    metodo_secante
+)
+
+from backend.metodos.modelo_deterioro import (
+    ajustar_modelo_cuadratico
+)
 app = Flask(__name__)
 
 # Configuración de la aplicación
@@ -23,6 +34,46 @@ migrate.init_app(app, db)
 # Importar modelos para que Flask-Migrate los detecte
 from models import *
 
+
+def buscar_intervalo_raiz_futura(funcion, tiempo_actual, tiempo_inicial):
+    """
+    Busca un intervalo futuro [a, b] donde la función
+    cambie de signo.
+    """
+
+    valor_actual = funcion(tiempo_actual)
+
+    if abs(valor_actual) < 1e-12:
+        raise ValueError(
+            "El modelo indica que el umbral ya se alcanzó en la última medición."
+        )
+
+    if valor_actual > 0:
+        raise ValueError(
+            "El modelo indica que el umbral ya fue superado. "
+            "No existe una predicción de cruce futuro desde la última medición."
+        )
+
+    paso = max(tiempo_inicial / 10, 0.1)
+    a = tiempo_actual
+
+    for _ in range(1000):
+        b = a + paso
+        valor_b = funcion(b)
+
+        if not math.isfinite(valor_b):
+            raise ValueError(
+                "El modelo produjo un valor inválido durante la búsqueda del intervalo."
+            )
+
+        if valor_b >= 0:
+            return a, b
+
+        a = b
+
+    raise ValueError(
+        "No se encontró un cruce futuro del umbral dentro del horizonte de búsqueda."
+    )
 
 # ==============================
 # RUTAS PRINCIPALES
@@ -202,21 +253,50 @@ def ejecutar_sistemas_lineales():
         }), 400
 
     try:
+        # --------------------------------------
+        # 3. Obtener matriz y vector
+        # --------------------------------------
+
+        matriz_personalizada = datos.get("matriz")
+        vector_personalizado = datos.get("vector_b")
+
+        if (matriz_personalizada is None) != (vector_personalizado is None):
+            return jsonify({
+                "error": "Debes enviar tanto la matriz como el vector."
+            }), 400
+
+        if matriz_personalizada is not None:
+            try:
+                matriz_personalizada = [
+                    [float(valor) for valor in fila]
+                    for fila in matriz_personalizada
+                ]
+
+                vector_personalizado = [
+                    float(valor) for valor in vector_personalizado
+                ]
+
+            except (TypeError, ValueError, OverflowError):
+                return jsonify({
+                    "error": "La matriz y el vector deben contener valores numéricos válidos."
+                }), 400
 
         # --------------------------------------
-        # 3. Ejecutar los cuatro métodos
+        # 4. Ejecutar los cuatro métodos
         # --------------------------------------
 
         resultado = ejecutar_escenario(
             escenario.tipo,
             tolerancia,
-            max_iter
+            max_iter,
+            matriz_personalizada=matriz_personalizada,
+            vector_personalizado=vector_personalizado
         )
 
         resultados_metodos = resultado["resultados"]
 
         # --------------------------------------
-        # 4. Crear el registro de simulación
+        # 5. Crear el registro de simulación
         # --------------------------------------
 
         simulacion = Simulacion(
@@ -231,7 +311,7 @@ def ejecutar_sistemas_lineales():
         db.session.flush()
 
         # --------------------------------------
-        # 5. Guardar cada método ejecutado
+        # 6. Guardar cada método ejecutado
         # --------------------------------------
 
         for nombre_metodo, datos_metodo in resultados_metodos.items():
@@ -253,7 +333,7 @@ def ejecutar_sistemas_lineales():
             db.session.flush()
 
             # --------------------------------------
-            # 6. Guardar el historial de iteraciones
+            # 7. Guardar historial de iteraciones
             # --------------------------------------
 
             historial = datos_metodo.get("historial", [])
@@ -272,7 +352,7 @@ def ejecutar_sistemas_lineales():
                 db.session.add(iteracion)
 
             # --------------------------------------
-            # 7. Guardar el resumen de cada método
+            # 8. Guardar resumen de cada método
             # --------------------------------------
 
             metricas = {
@@ -304,13 +384,13 @@ def ejecutar_sistemas_lineales():
             db.session.add(resumen)
 
         # --------------------------------------
-        # 8. Confirmar todos los registros
+        # 9. Confirmar registros en PostgreSQL
         # --------------------------------------
 
         db.session.commit()
 
         # --------------------------------------
-        # 9. Devolver los resultados al frontend
+        # 10. Devolver resultados al frontend
         # --------------------------------------
 
         return jsonify({
@@ -324,6 +404,14 @@ def ejecutar_sistemas_lineales():
             "numero_condicion": resultado.get("numero_condicion"),
             "resultados": resultados_metodos
         }), 200
+
+    except ValueError as error:
+        db.session.rollback()
+
+        return jsonify({
+            "exito": False,
+            "error": str(error)
+        }), 400
 
     except Exception:
         db.session.rollback()
@@ -626,7 +714,404 @@ def registrar_medicion():
         return jsonify({
             "error": "Ocurrió un error al guardar la medición."
         }), 500
+@app.route("/api/sistemas-lineales/escenarios/<tipo>/sistema", methods=["GET"])
+def obtener_sistema_escenario(tipo):
 
+    try:
+        resultado = generar_sistema_escenario(tipo.upper())
+        return jsonify(resultado), 200
+
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+
+# ==========================================
+# API: BÚSQUEDA DE RAÍCES POR DETERIORO
+# ==========================================
+
+@app.route("/api/busqueda-raices/ejecutar", methods=["POST"])
+def ejecutar_busqueda_raices():
+
+    datos = request.get_json(silent=True) or {}
+
+    # 1. Validar componente seleccionado
+    if datos.get("componente_id") is None:
+        return jsonify({
+            "exito": False,
+            "error": "Debes seleccionar un componente mecánico."
+        }), 400
+
+    try:
+        componente_id = int(datos["componente_id"])
+        tolerancia = float(datos.get("tolerancia", 1e-6))
+        max_iter = int(datos.get("max_iter", 100))
+
+        if not math.isfinite(tolerancia) or tolerancia <= 0:
+            raise ValueError("La tolerancia debe ser positiva y válida.")
+
+        if max_iter < 1:
+            raise ValueError("El máximo de iteraciones debe ser al menos 1.")
+
+    except (ValueError, TypeError, OverflowError) as error:
+        return jsonify({
+            "exito": False,
+            "error": str(error)
+        }), 400
+
+    try:
+        # 2. Buscar componente
+        componente = db.session.get(
+            ComponenteMecanico,
+            componente_id
+        )
+
+        if not componente:
+            return jsonify({
+                "exito": False,
+                "error": "El componente seleccionado no existe."
+            }), 404
+
+        if componente.umbral_inspeccion is None:
+            return jsonify({
+                "exito": False,
+                "error": "El componente no tiene un umbral de inspección definido."
+            }), 400
+
+        # 3. Recuperar mediciones históricas
+        mediciones = (
+            MedicionDeterioro.query
+            .filter_by(componente_id=componente.id)
+            .order_by(MedicionDeterioro.tiempo.asc())
+            .all()
+        )
+
+        if len(mediciones) < 3:
+            return jsonify({
+                "exito": False,
+                "error": "Se necesitan al menos tres mediciones para realizar el análisis."
+            }), 400
+
+        tiempos = [m.tiempo for m in mediciones]
+        deterioros = [m.deterioro for m in mediciones]
+
+        # 4. Ajustar el modelo cuadrático
+        modelo = ajustar_modelo_cuadratico(
+            tiempos,
+            deterioros
+        )
+
+        funcion_modelo = modelo["funcion"]
+        derivada_modelo = modelo["derivada"]
+
+        umbral = float(componente.umbral_inspeccion)
+
+        # Construir f(t) = D(t) - umbral
+        def funcion(t):
+            return funcion_modelo(t) - umbral
+
+        def derivada(t):
+            return derivada_modelo(t)
+
+        # 5. Buscar intervalo futuro
+        tiempo_actual = max(tiempos)
+        amplitud = max(
+            max(tiempos) - min(tiempos),
+            1.0
+        )
+
+        a, b = buscar_intervalo_raiz_futura(
+            funcion,
+            tiempo_actual,
+            amplitud
+        )
+
+        # 6. Ejecutar los tres métodos
+        metodos = {
+            "BISECCION": lambda: metodo_biseccion(
+                funcion, a, b, tolerancia, max_iter
+            ),
+            "NEWTON_RAPHSON": lambda: metodo_newton_raphson(
+                funcion, derivada, (a + b) / 2, tolerancia, max_iter
+            ),
+            "SECANTE": lambda: metodo_secante(
+                funcion, a, b, tolerancia, max_iter
+            )
+        }
+
+        resultados_metodos = {}
+        tiempos_ejecucion = {}
+
+        for nombre, ejecutar in metodos.items():
+            inicio = perf_counter()
+
+            try:
+                resultado_metodo = ejecutar()
+
+            except (ValueError, ZeroDivisionError, OverflowError) as error:
+                resultado_metodo = {
+                    "solucion": None,
+                    "convergio": False,
+                    "iteraciones": 0,
+                    "error_abs": None,
+                    "error_rel": None,
+                    "residual": None,
+                    "historial": [],
+                    "mensaje": str(error)
+                }
+
+            fin = perf_counter()
+
+            resultados_metodos[nombre] = resultado_metodo
+            tiempos_ejecucion[nombre] = (
+                fin - inicio
+            ) * 1000
+
+        # 7. Buscar escenario de búsqueda de raíces
+        escenario = (
+            Escenario.query
+            .join(CasoEstudio)
+            .filter(
+                CasoEstudio.modulo == "deterioro",
+                Escenario.tipo == "BUSQUEDA_RAICES"
+            )
+            .first()
+        )
+
+        if not escenario:
+            return jsonify({
+                "exito": False,
+                "error": "No se encontró el escenario BUSQUEDA_RAICES. "
+                         "Verifica los datos iniciales."
+            }), 404
+
+        # 8. Crear simulación
+        simulacion = Simulacion(
+            escenario_id=escenario.id,
+            usuario_equipo=(
+                str(datos.get("usuario_equipo") or "").strip() or None
+            ),
+            estado="COMPLETADA"
+        )
+
+        db.session.add(simulacion)
+        db.session.flush()
+
+        # 9. Guardar análisis asociado al componente
+        analisis = AnalisisRaices(
+            simulacion_id=simulacion.id,
+            componente_id=componente.id,
+            umbral=umbral,
+            parametros_modelo={
+                "D0": modelo["D0"],
+                "alpha": modelo["alpha"],
+                "beta": modelo["beta"],
+                "modelo": modelo["modelo"],
+                "error_cuadratico": modelo["error_cuadratico"],
+                "intervalo_busqueda": [a, b]
+            }
+        )
+
+        db.session.add(analisis)
+
+        # 10. Guardar ejecuciones e iteraciones
+        for nombre, resultado in resultados_metodos.items():
+
+            ejecucion = EjecucionMetodo(
+                simulacion_id=simulacion.id,
+                metodo=nombre,
+                tolerancia=tolerancia,
+                paso=None,
+                max_iter=max_iter,
+                convergio=resultado.get("convergio", False),
+                tiempo_ms=tiempos_ejecucion[nombre]
+            )
+
+            db.session.add(ejecucion)
+            db.session.flush()
+
+            for registro in resultado.get("historial", []):
+
+                iteracion = IteracionResultado(
+                    ejecucion_id=ejecucion.id,
+                    numero=registro.get("iteracion"),
+                    aproximacion_json=registro.get("aproximacion"),
+                    residual=registro.get("residual"),
+                    error_abs=registro.get(
+                        "error_abs",
+                        registro.get("error")
+                    ),
+                    error_rel=registro.get("error_rel")
+                )
+
+                db.session.add(iteracion)
+
+            resumen = ResultadoResumen(
+                ejecucion_id=ejecucion.id,
+                referencia="Umbral de deterioro del componente",
+                valor_json=resultado.get("solucion"),
+                metrica_error_json={
+                    "error_absoluto": resultado.get("error_abs"),
+                    "error_relativo": resultado.get("error_rel"),
+                    "residual": resultado.get("residual"),
+                    "iteraciones": resultado.get("iteraciones")
+                },
+                interpretacion=resultado.get("mensaje", "")
+            )
+
+            db.session.add(resumen)
+
+        # 11. Confirmar todos los registros
+        db.session.commit()
+
+        # 12. Preparar respuesta para el frontend
+        resultados_respuesta = {}
+
+        for nombre, resultado in resultados_metodos.items():
+            raiz = resultado.get("solucion")
+
+            resultados_respuesta[nombre] = {
+                "solucion": raiz,
+                "deterioro_estimado": (
+                    float(funcion_modelo(raiz))
+                    if raiz is not None else None
+                ),
+                "convergio": resultado.get("convergio"),
+                "iteraciones": resultado.get("iteraciones"),
+                "error_abs": resultado.get("error_abs"),
+                "error_rel": resultado.get("error_rel"),
+                "residual": resultado.get("residual"),
+                "tiempo_ms": tiempos_ejecucion[nombre],
+                "historial": resultado.get("historial", []),
+                "mensaje": resultado.get("mensaje")
+            }
+
+        return jsonify({
+            "exito": True,
+            "mensaje": "Análisis de raíces ejecutado y guardado correctamente.",
+            "simulacion_id": simulacion.id,
+            "componente": {
+                "id": componente.id,
+                "codigo": componente.codigo,
+                "nombre": componente.nombre,
+                "umbral": umbral,
+                "unidad": componente.unidad_indicador
+            },
+            "modelo": {
+                "D0": modelo["D0"],
+                "alpha": modelo["alpha"],
+                "beta": modelo["beta"],
+                "formula": modelo["modelo"],
+                "error_cuadratico": modelo["error_cuadratico"]
+            },
+            "intervalo_busqueda": {
+                "a": a,
+                "b": b
+            },
+            "resultados": resultados_respuesta
+        }), 200
+
+    except ValueError as error:
+        db.session.rollback()
+
+        return jsonify({
+            "exito": False,
+            "error": str(error)
+        }), 400
+
+    except Exception:
+        db.session.rollback()
+
+        app.logger.exception(
+            "Error al ejecutar el análisis de búsqueda de raíces"
+        )
+
+        return jsonify({
+            "exito": False,
+            "error": "Ocurrió un error al ejecutar o guardar el análisis."
+        }), 500
+
+# ==========================================
+# API: HISTORIAL DE SIMULACIONES
+# ==========================================
+
+@app.route("/api/historial", methods=["GET"])
+def obtener_historial():
+
+    try:
+        # 1. Consultar simulaciones del módulo deterioro
+        simulaciones = (
+            Simulacion.query
+            .join(Escenario)
+            .join(CasoEstudio)
+            .filter(CasoEstudio.modulo == "deterioro")
+            .order_by(Simulacion.fecha.desc())
+            .all()
+        )
+
+        historial = []
+
+        # 2. Recuperar los métodos y resultados
+        for simulacion in simulaciones:
+
+            ejecuciones = EjecucionMetodo.query.filter_by(
+                simulacion_id=simulacion.id
+            ).all()
+
+            metodos = []
+
+            for ejecucion in ejecuciones:
+
+                resumen = ResultadoResumen.query.filter_by(
+                    ejecucion_id=ejecucion.id
+                ).first()
+
+                metodos.append({
+                    "metodo": ejecucion.metodo,
+                    "convergio": ejecucion.convergio,
+                    "tiempo_ms": ejecucion.tiempo_ms,
+                    "tolerancia": ejecucion.tolerancia,
+                    "max_iter": ejecucion.max_iter,
+                    "resultado": (
+                        resumen.valor_json if resumen else None
+                    ),
+                    "metricas": (
+                        resumen.metrica_error_json if resumen else {}
+                    ),
+                    "interpretacion": (
+                        resumen.interpretacion if resumen else ""
+                    )
+                })
+
+            # 3. Agregar información de la simulación
+            historial.append({
+                "id": simulacion.id,
+                "fecha": (
+                    simulacion.fecha.strftime("%d/%m/%Y %H:%M")
+                    if simulacion.fecha else "--"
+                ),
+                "estado": simulacion.estado,
+                "escenario": simulacion.escenario.tipo,
+                "descripcion": (
+                    simulacion.escenario.parametros_json or {}
+                ).get("descripcion", ""),
+                "metodos": metodos
+            })
+
+        return jsonify({
+            "exito": True,
+            "total": len(historial),
+            "historial": historial
+        }), 200
+
+    except Exception:
+        db.session.rollback()
+
+        app.logger.exception("Error al consultar el historial")
+
+        return jsonify({
+            "exito": False,
+            "error": "No se pudo obtener el historial de simulaciones."
+        }), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

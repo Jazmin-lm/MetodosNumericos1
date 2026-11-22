@@ -76,7 +76,22 @@ with app.app_context():
                 "condicion_objetivo": 100000000
             },
             "fuente_datos": "Datos de prueba - escenario mal condicionado"
-        }
+        },
+    {
+        "tipo": "BUSQUEDA_RAICES",
+        "parametros_json": {
+            "descripcion": "Predicción del tiempo necesario para alcanzar el umbral de deterioro.",
+            "metodos": [
+                "BISECCION",
+                "NEWTON_RAPHSON",
+                "SECANTE"
+            ],
+            "modelo": "D(t) = D0 + alpha*t + beta*t^2",
+            "fuente": "Mediciones registradas de los componentes mecánicos"
+        },
+        "fuente_datos": "Mediciones de deterioro de componentes mecánicos"
+    }
+
     ]
 
     # ==========================================

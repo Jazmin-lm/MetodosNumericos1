@@ -1,21 +1,15 @@
 
 import math
 from time import perf_counter
-
-
 # =====================================================
 # 1. VALIDACIÓN DE SISTEMAS
 # =====================================================
-
 def validar_sistema(A, b):
     n = len(A)
-
     if n == 0 or len(b) != n:
         raise ValueError("Las dimensiones de A y b no coinciden.")
-
     if any(len(fila) != n for fila in A):
         raise ValueError("La matriz A debe ser cuadrada.")
-
     for fila in A:
         for valor in fila:
             if not math.isfinite(float(valor)):
@@ -673,18 +667,63 @@ def ejecutar_metodos(
 def ejecutar_escenario(
     tipo,
     tolerancia=1e-6,
-    max_iter=100
+    max_iter=100,
+    matriz_personalizada=None,
+    vector_personalizado=None
 ):
 
-    sistema = generar_sistema_escenario(tipo)
+    # --------------------------------------
+    # 1. Determinar si se utilizará el
+    #    sistema original o uno personalizado
+    # --------------------------------------
+
+    if matriz_personalizada is None and vector_personalizado is None:
+
+        sistema = generar_sistema_escenario(tipo)
+
+        A = sistema["A"]
+        b = sistema["b"]
+        referencia = sistema["solucion_exacta"]
+
+    elif matriz_personalizada is not None and vector_personalizado is not None:
+
+        A = matriz_personalizada
+        b = vector_personalizado
+
+        validar_sistema(A, b)
+
+        # La solución de referencia se calcula
+        # para la nueva matriz y el nuevo vector.
+        referencia = resolver_referencia(A, b)
+
+        sistema = {
+            "escenario": tipo,
+            "A": A,
+            "b": b,
+            "solucion_exacta": referencia,
+            "personalizado": True
+        }
+
+    else:
+        raise ValueError(
+            "Debes enviar tanto la matriz A como el vector b."
+        )
+
+    # --------------------------------------
+    # 2. Ejecutar los cuatro métodos
+    # --------------------------------------
 
     comparacion = ejecutar_metodos(
-        sistema["A"],
-        sistema["b"],
+        A,
+        b,
         tolerancia=tolerancia,
         max_iter=max_iter,
-        solucion_referencia=sistema["solucion_exacta"]
+        solucion_referencia=referencia
     )
+
+    # --------------------------------------
+    # 3. Devolver todos los resultados
+    # --------------------------------------
 
     return {
         **sistema,
