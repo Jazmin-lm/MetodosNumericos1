@@ -26,6 +26,9 @@ function mostrarSeccion(id) {
     if (id === "historial") {
         cargarHistorial();
     }
+    if (id === "mantenimiento") {
+        cargarEstadoMantenimiento();
+    }
 }
 
 document.querySelectorAll(".menu-enlace").forEach(enlace => {
@@ -75,6 +78,7 @@ async function cargarDatos() {
         componentesActuales = datos.componentes;
         cargarComponentesRaices();
         cargarComponentesMedicion();
+        cargarComponentesComplementarios();
 
         actualizarIndicadores(datos);
         actualizarTablas(datos.componentes);
@@ -1476,6 +1480,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarMediciones();
     cargarEscenariosSistemas();
     inicializarBusquedaRaices();
+    inicializarIntegracionMantenimiento();
 
 });
 
@@ -2550,4 +2555,231 @@ function cerrarDetalleHistorial() {
 
     document.getElementById("detalle-historial")
         ?.classList.add("oculto");
+}
+
+
+/* ==========================================
+   INTEGRACION Y MANTENIMIENTO - MODULO 2
+   ========================================== */
+
+let graficoIntegracionDeterioro = null;
+let componenteSeleccionadoMantenimiento = null;
+
+function cargarComponentesComplementarios() {
+    ["componente-integracion", "componente-mantenimiento"].forEach(id => {
+        const selector = document.getElementById(id);
+        if (!selector) return;
+        const anterior = selector.value;
+        selector.innerHTML = '<option value="">Selecciona un componente</option>';
+        componentesActuales.forEach(componente => {
+            const opcion = document.createElement("option");
+            opcion.value = componente.id;
+            opcion.textContent = `${componente.codigo} - ${componente.nombre}`;
+            selector.appendChild(opcion);
+        });
+        if (anterior && componentesActuales.some(c => String(c.id) === anterior)) {
+            selector.value = anterior;
+        }
+    });
+}
+
+function mensajeModulo2(id, texto, tipo = "info") {
+    const elemento = document.getElementById(id);
+    if (!elemento) return;
+    elemento.textContent = texto;
+    const colores = {
+        info: ["#1d4ed8", "#eff6ff"],
+        error: ["#b91c1c", "#fef2f2"],
+        exito: ["#15803d", "#f0fdf4"]
+    };
+    const color = colores[tipo] || colores.info;
+    elemento.style.color = color[0];
+    elemento.style.background = color[1];
+    elemento.style.padding = "10px 12px";
+    elemento.style.borderRadius = "8px";
+}
+
+function numeroModulo2(valor, decimales = 6) {
+    if (valor === null || valor === undefined || !Number.isFinite(Number(valor))) return "No disponible";
+    return Number(valor).toLocaleString("es-ES", { maximumFractionDigits: decimales });
+}
+
+function inicializarIntegracionMantenimiento() {
+    const botonIntegracion = document.getElementById("btn-ejecutar-integracion");
+    if (botonIntegracion) botonIntegracion.addEventListener("click", ejecutarIntegracionDeterioro);
+
+    const botonPrediccion = document.getElementById("btn-predecir-mantenimiento");
+    if (botonPrediccion) botonPrediccion.addEventListener("click", ejecutarPrediccionMantenimiento);
+
+    const botonIntervencion = document.getElementById("btn-simular-mantenimiento");
+    if (botonIntervencion) botonIntervencion.addEventListener("click", ejecutarIntervencionMantenimiento);
+}
+
+async function ejecutarIntegracionDeterioro() {
+    const componenteId = document.getElementById("componente-integracion").value;
+    const boton = document.getElementById("btn-ejecutar-integracion");
+    if (!componenteId) {
+        mensajeModulo2("mensaje-integracion", "Selecciona un componente mecánico.", "error");
+        return;
+    }
+    boton.disabled = true;
+    boton.textContent = "Calculando...";
+    document.getElementById("resultados-integracion").classList.add("oculto");
+    mensajeModulo2("mensaje-integracion", "Recuperando mediciones y calculando el área bajo la curva...");
+    try {
+        const respuesta = await fetch("/api/integracion/deterioro", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ componente_id: Number(componenteId) })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok || !datos.exito) throw new Error(datos.error || "No se pudo calcular la integración.");
+
+        document.getElementById("integral-total").textContent = numeroModulo2(datos.integral);
+        document.getElementById("integral-mediciones").textContent = datos.mediciones;
+        document.getElementById("integral-intervalo").textContent = `${numeroModulo2(datos.tiempo_inicial)} – ${numeroModulo2(datos.tiempo_final)}`;
+        const cuerpo = document.getElementById("tabla-integracion");
+        cuerpo.replaceChildren();
+        datos.detalle.forEach(item => {
+            const fila = document.createElement("tr");
+            [item.intervalo, numeroModulo2(item.tiempo_inicial), numeroModulo2(item.tiempo_final),
+             numeroModulo2(item.deterioro_inicial), numeroModulo2(item.deterioro_final), numeroModulo2(item.area)]
+                .forEach(valor => { const celda = document.createElement("td"); celda.textContent = valor; fila.appendChild(celda); });
+            cuerpo.appendChild(fila);
+        });
+        if (graficoIntegracionDeterioro) graficoIntegracionDeterioro.destroy();
+        graficoIntegracionDeterioro = new Chart(document.getElementById("grafico-integracion"), {
+            type: "line",
+            data: { labels: datos.tiempos, datasets: [{
+                label: `Deterioro - ${datos.componente.codigo}`,
+                data: datos.deterioros, borderColor: "#2563eb", backgroundColor: "rgba(37,99,235,.12)",
+                fill: true, tension: 0.25, pointRadius: 4
+            }] },
+            options: { responsive: true, plugins: { legend: { display: true } },
+                scales: { x: { title: { display: true, text: "Tiempo" } },
+                    y: { beginAtZero: true, title: { display: true, text: "Deterioro" } } } }
+        });
+        document.getElementById("interpretacion-integracion").textContent =
+            `Se integraron ${datos.mediciones} mediciones de ${datos.componente.nombre}. El área aproximada fue ${numeroModulo2(datos.integral)} unidades de deterioro × tiempo. Simulación guardada con identificador ${datos.simulacion_id}.`;
+        document.getElementById("resultados-integracion").classList.remove("oculto");
+        mensajeModulo2("mensaje-integracion", "Integración calculada y guardada correctamente.", "exito");
+    } catch (error) {
+        mensajeModulo2("mensaje-integracion", error.message, "error");
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Calcular deterioro acumulado";
+    }
+}
+
+async function cargarEstadoMantenimiento() {
+    const cuerpo = document.getElementById("tabla-estado-mantenimiento");
+    if (!cuerpo) return;
+    try {
+        const respuesta = await fetch("/api/mantenimiento/componentes");
+        const datos = await respuesta.json();
+        if (!respuesta.ok || !datos.exito) throw new Error(datos.error || "No se pudo consultar el estado.");
+        cuerpo.replaceChildren();
+        if (!datos.componentes.length) {
+            const fila = document.createElement("tr");
+            const celda = document.createElement("td"); celda.colSpan = 5;
+            celda.textContent = "No hay componentes registrados."; fila.appendChild(celda); cuerpo.appendChild(fila);
+            return;
+        }
+        datos.componentes.forEach(item => {
+            const fila = document.createElement("tr");
+            const valores = [
+                `${item.codigo} - ${item.nombre}`,
+                item.actual === null ? "Sin mediciones" : numeroModulo2(item.actual),
+                item.umbral === null ? "No definido" : numeroModulo2(item.umbral),
+                item.cantidad_mediciones
+            ];
+            valores.forEach(valor => {
+                const celda = document.createElement("td");
+                celda.textContent = valor;
+                fila.appendChild(celda);
+            });
+            const celdaEstado = document.createElement("td");
+            const estado = document.createElement("span");
+            estado.className = "estado-mantenimiento-etiqueta";
+            if (item.estado === "Requiere inspección") estado.classList.add("estado-alerta");
+            else if (item.estado === "Dentro del umbral") estado.classList.add("estado-normal");
+            else estado.classList.add("estado-pendiente");
+            estado.textContent = item.estado;
+            celdaEstado.appendChild(estado);
+            fila.appendChild(celdaEstado);
+            cuerpo.appendChild(fila);
+        });
+    } catch (error) {
+        cuerpo.innerHTML = "";
+        const fila = document.createElement("tr"); const celda = document.createElement("td");
+        celda.colSpan = 5; celda.textContent = error.message; fila.appendChild(celda); cuerpo.appendChild(fila);
+    }
+}
+
+async function ejecutarPrediccionMantenimiento() {
+    const componenteId = document.getElementById("componente-mantenimiento").value;
+    const boton = document.getElementById("btn-predecir-mantenimiento");
+    if (!componenteId) {
+        mensajeModulo2("mensaje-mantenimiento", "Selecciona un componente.", "error"); return;
+    }
+    componenteSeleccionadoMantenimiento = Number(componenteId);
+    boton.disabled = true; boton.textContent = "Analizando...";
+    document.getElementById("resultado-prediccion-mantenimiento").classList.add("oculto");
+    document.getElementById("resultado-intervencion-mantenimiento").classList.add("oculto");
+    document.getElementById("btn-simular-mantenimiento").disabled = true;
+    mensajeModulo2("mensaje-mantenimiento", "Ajustando el modelo cuadrático y estimando el cruce del umbral...");
+    try {
+        const respuesta = await fetch("/api/mantenimiento/predecir", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ componente_id: componenteSeleccionadoMantenimiento })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok || !datos.exito) throw new Error(datos.error || "No se pudo estimar el mantenimiento.");
+        document.getElementById("mantenimiento-actual").textContent = numeroModulo2(datos.actual);
+        document.getElementById("mantenimiento-umbral").textContent = numeroModulo2(datos.umbral);
+        if (datos.ya_alcanzo) {
+            document.getElementById("mantenimiento-tiempo").textContent = "Inspección ahora";
+            document.getElementById("mantenimiento-interpretacion").textContent = datos.mensaje;
+        } else {
+            document.getElementById("mantenimiento-tiempo").textContent = `${numeroModulo2(datos.tiempo_restante)} unidades`;
+            document.getElementById("mantenimiento-interpretacion").textContent =
+                `El modelo estima el cruce del umbral en t = ${numeroModulo2(datos.tiempo_estimado)}. Desde la última medición faltan aproximadamente ${numeroModulo2(datos.tiempo_restante)} unidades de tiempo. Se utilizó bisección; residual: ${numeroModulo2(datos.residual)}. Predicción guardada (${datos.simulacion_id}).`;
+        }
+        document.getElementById("resultado-prediccion-mantenimiento").classList.remove("oculto");
+        document.getElementById("btn-simular-mantenimiento").disabled = false;
+        mensajeModulo2("mensaje-mantenimiento", datos.ya_alcanzo ? datos.mensaje : "Predicción calculada y guardada correctamente.", datos.ya_alcanzo ? "error" : "exito");
+    } catch (error) {
+        mensajeModulo2("mensaje-mantenimiento", error.message, "error");
+    } finally {
+        boton.disabled = false; boton.textContent = "Estimar mantenimiento";
+    }
+}
+
+async function ejecutarIntervencionMantenimiento() {
+    const componenteId = componenteSeleccionadoMantenimiento || Number(document.getElementById("componente-mantenimiento").value);
+    const reduccion = Number(document.getElementById("reduccion-mantenimiento").value);
+    const boton = document.getElementById("btn-simular-mantenimiento");
+    if (!componenteId) { mensajeModulo2("mensaje-intervencion-mantenimiento", "Selecciona y analiza un componente primero.", "error"); return; }
+    if (!Number.isFinite(reduccion) || reduccion <= 0 || reduccion >= 100) {
+        mensajeModulo2("mensaje-intervencion-mantenimiento", "La reducción debe estar entre 1 y 99 %.", "error"); return;
+    }
+    boton.disabled = true; boton.textContent = "Simulando...";
+    try {
+        const respuesta = await fetch("/api/mantenimiento/simular", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ componente_id: componenteId, reduccion_porcentaje: reduccion })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok || !datos.exito) throw new Error(datos.error || "No se pudo simular la intervención.");
+        document.getElementById("intervencion-antes").textContent = numeroModulo2(datos.antes);
+        document.getElementById("intervencion-despues").textContent = numeroModulo2(datos.despues);
+        document.getElementById("intervencion-tiempo").textContent = datos.tiempo_restante === null ? "No estimable" : `${numeroModulo2(datos.tiempo_restante)} unidades`;
+        document.getElementById("intervencion-interpretacion").textContent =
+            `Se supuso una reducción del ${numeroModulo2(datos.reduccion_porcentaje, 2)} %. Esta operación no modifica las mediciones originales. Simulación guardada (${datos.simulacion_id}).`;
+        document.getElementById("resultado-intervencion-mantenimiento").classList.remove("oculto");
+        mensajeModulo2("mensaje-intervencion-mantenimiento", datos.mensaje, "exito");
+    } catch (error) {
+        mensajeModulo2("mensaje-intervencion-mantenimiento", error.message, "error");
+    } finally {
+        boton.disabled = false; boton.textContent = "Simular intervención";
+    }
 }

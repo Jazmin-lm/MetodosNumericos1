@@ -64,7 +64,7 @@
     </a>
 
     <a href="#integracion" class="menu-enlace">
-        <span>∫</span> Integración (opcional)
+        <span>∫</span> Integración del deterioro
     </a>
 
     <span class="menu-titulo">ANÁLISIS</span>
@@ -192,24 +192,6 @@
                     </div>
                 </article>
 
-
-                <article class="tarjeta-panel estado-panel">
-                    <div class="encabezado-tarjeta">
-                        <div>
-                            <h3>Estado de componentes</h3>
-                            <p>Clasificación según su umbral</p>
-                        </div>
-                    </div>
-
-                    <div class="estado-vacio" id="resumen-estados">
-                        <span>⚙</span>
-                        <strong>Sin datos registrados</strong>
-                        <p>
-                            Registra componentes y mediciones
-                            para visualizar su estado.
-                        </p>
-                    </div>
-                </article>
 
             </div>
 
@@ -1112,18 +1094,21 @@
 
 
 <section id="integracion" class="seccion oculto">
-
-    <!-- Aquí implementaremos los métodos de integración opcionales -->
-
+    <div class="encabezado-seccion"><div><span class="etiqueta-seccion">MÉTODOS NUMÉRICOS</span><h2>Integración del deterioro</h2><p>Estima la magnitud acumulada del deterioro a partir de las mediciones históricas de un componente.</p></div></div>
+    <article class="tarjeta-informacion"><h3>¿Qué calcula esta sección?</h3><p>Se aplica el método del trapecio compuesto sobre los datos registrados. Cada intervalo utiliza sus tiempos reales, por lo que también se admiten mediciones con separación no uniforme. El resultado representa el área bajo la curva de deterioro, no el porcentaje actual ni el tiempo de mantenimiento.</p><div class="formula-raices">I ≈ Σ [(D(tᵢ) + D(tᵢ₊₁)) / 2] · (tᵢ₊₁ − tᵢ)</div></article>
+    <article class="tarjeta-raices"><div class="titulo-tarjeta"><h3>Configuración de integración</h3><p>Selecciona un componente con al menos dos mediciones registradas.</p></div><div class="configuracion-raices"><div class="campo-raices"><label for="componente-integracion">Componente mecánico</label><select id="componente-integracion"><option value="">Selecciona un componente</option></select></div></div><button type="button" class="btn-ejecutar-raices" id="btn-ejecutar-integracion">Calcular deterioro acumulado</button><p id="mensaje-integracion" class="mensaje-raices">Selecciona un componente para comenzar.</p></article>
+    <div id="resultados-integracion" class="oculto"><div class="indicadores-raices"><div class="indicador-raices"><span>Integral aproximada</span><strong id="integral-total">--</strong><small>Unidades de deterioro × tiempo</small></div><div class="indicador-raices"><span>Mediciones utilizadas</span><strong id="integral-mediciones">--</strong><small>Puntos históricos</small></div><div class="indicador-raices"><span>Intervalo analizado</span><strong id="integral-intervalo">--</strong><small>Tiempo inicial a final</small></div></div>
+    <article class="tarjeta-raices"><div class="titulo-tarjeta"><h3>Áreas por intervalo</h3><p>Detalle del cálculo del trapecio compuesto.</p></div><div class="tabla-contenedor-raices"><table><thead><tr><th>Intervalo</th><th>Tiempo inicial</th><th>Tiempo final</th><th>Deterioro inicial</th><th>Deterioro final</th><th>Área aproximada</th></tr></thead><tbody id="tabla-integracion"></tbody></table></div></article>
+    <article class="tarjeta-raices"><div class="titulo-tarjeta"><h3>Evolución del deterioro</h3><p>Mediciones utilizadas en la integración.</p></div><canvas id="grafico-integracion" height="110"></canvas><p id="interpretacion-integracion" class="resumen-iteraciones-raices"></p></article></div>
 </section>
 
-
-<!-- SECCIONES DE ANÁLISIS -->
-
 <section id="mantenimiento" class="seccion oculto">
-
-    <!-- Aquí analizaremos las decisiones de mantenimiento -->
-
+    <div class="encabezado-seccion"><div><span class="etiqueta-seccion">ANÁLISIS Y PREVENCIÓN</span><h2>Planificación de mantenimiento</h2><p>Consulta el estado de los componentes y estima cuándo alcanzarían su umbral de inspección.</p></div></div>
+    <article class="tarjeta-informacion"><h3>Modelo de predicción</h3><p>Se reutiliza el modelo cuadrático construido con las mediciones históricas. La búsqueda de raíces estima el tiempo en que el deterioro alcanza el umbral definido para el componente. La intervención posterior es una simulación hipotética y no representa una reparación real.</p><div class="formula-raices">D(t) = D₀ + αt + βt²</div></article>
+    <article class="tarjeta-raices"><div class="titulo-tarjeta"><h3>Estado de los componentes</h3><p>Estado calculado a partir de la última medición y el umbral registrado.</p></div><div class="tabla-contenedor-raices"><table><thead><tr><th>Componente</th><th>Último deterioro</th><th>Umbral</th><th>Mediciones</th><th>Estado</th></tr></thead><tbody id="tabla-estado-mantenimiento"><tr><td colspan="5">Cargando componentes...</td></tr></tbody></table></div></article>
+    <article class="tarjeta-raices"><div class="titulo-tarjeta"><h3>Predicción de mantenimiento</h3><p>Selecciona un componente para estimar el tiempo hasta el umbral.</p></div><div class="configuracion-raices"><div class="campo-raices"><label for="componente-mantenimiento">Componente mecánico</label><select id="componente-mantenimiento"><option value="">Selecciona un componente</option></select></div></div><button type="button" class="btn-ejecutar-raices" id="btn-predecir-mantenimiento">Estimar mantenimiento</button><p id="mensaje-mantenimiento" class="mensaje-raices">Selecciona un componente para comenzar.</p>
+    <div id="resultado-prediccion-mantenimiento" class="oculto"><div class="indicadores-raices"><div class="indicador-raices"><span>Deterioro actual</span><strong id="mantenimiento-actual">--</strong><small>Última medición</small></div><div class="indicador-raices"><span>Umbral</span><strong id="mantenimiento-umbral">--</strong><small>Umbral de inspección</small></div><div class="indicador-raices"><span>Tiempo estimado</span><strong id="mantenimiento-tiempo">--</strong><small>Desde la última medición</small></div></div><p id="mantenimiento-interpretacion" class="resumen-iteraciones-raices"></p></div></article>
+    <article class="tarjeta-raices"><div class="titulo-tarjeta"><h3>Simulación de intervención</h3><p>Evalúa cómo cambiaría la predicción si una intervención redujera el indicador de deterioro.</p></div><div class="configuracion-raices"><div class="campo-raices"><label for="reduccion-mantenimiento">Reducción hipotética (%)</label><input type="number" id="reduccion-mantenimiento" min="1" max="99" step="1" value="20"><small>Porcentaje supuesto de reducción del deterioro actual.</small></div></div><button type="button" class="btn-ejecutar-raices" id="btn-simular-mantenimiento" disabled>Simular intervención</button><div id="resultado-intervencion-mantenimiento" class="oculto"><div class="indicadores-raices"><div class="indicador-raices"><span>Antes</span><strong id="intervencion-antes">--</strong><small>Deterioro actual</small></div><div class="indicador-raices"><span>Después</span><strong id="intervencion-despues">--</strong><small>Deterioro hipotético</small></div><div class="indicador-raices"><span>Nuevo tiempo estimado</span><strong id="intervencion-tiempo">--</strong><small>Tiempo adicional tras intervención</small></div></div><p id="intervencion-interpretacion" class="resumen-iteraciones-raices"></p></div><p id="mensaje-intervencion-mantenimiento" class="mensaje-raices"></p></article>
 </section>
 
 <section id="historial" class="seccion oculto">

@@ -762,3 +762,35 @@ Aplicar métodos numéricos para resolver modelos matemáticos, analizar errores
 **SIMTELE-RISK — Métodos Numéricos**
 
 Proyecto académico de desarrollo colaborativo.
+
+
+## 🌬️ 10. Módulo 3: Oscilaciones por viento
+
+El módulo estudia la respuesta dinámica de una cabina aproximada mediante un sistema masa–resorte–amortiguador sometido a una fuerza periódica:
+
+```text
+x'(t) = v(t)
+v'(t) = [F(t) - c·v(t) - k·x(t)] / m
+F(t) = F₀ sen(ωt + φ)
+```
+
+La interfaz se encuentra en `templates/oscilaciones.html` y conserva la estructura de configuración, escenarios, resultados, comparación de métodos, tabla de iteraciones, análisis e historial. Su presentación utiliza la línea visual azul y blanca de SIMTELE-RISK.
+
+Los cálculos se ejecutan en `backend/modulos/oscilaciones.py` mediante el endpoint:
+
+```text
+POST /api/oscilaciones/simular
+```
+
+El módulo implementa:
+- Runge-Kutta de segundo orden (punto medio) y cuarto orden.
+- Trapecio compuesto, Simpson 1/3 compuesto y Romberg para la integral de x²(t).
+- Comparación de RK4 con una referencia RK4 de cuatro veces más pasos.
+- Validación independiente mediante la solución analítica de vibración libre.
+- Análisis de sensibilidad con una perturbación simultánea del 1% en masa, amortiguamiento y rigidez.
+
+Los escenarios disponibles son NORMAL, ESTRÉS y MAL CONDICIONADO. Los parámetros son sintéticos y editables. El historial de esta versión se almacena localmente en el navegador y la exportación CSV contiene los puntos de la trayectoria mostrados en la simulación.
+
+**Validación de parámetros:** N debe ser par y potencia de dos para que puedan ejecutarse Simpson 1/3 y Romberg. La interfaz ofrece valores compatibles.
+
+**Importante:** este módulo tiene fines académicos. No está conectado a equipos reales y sus resultados no deben utilizarse para decisiones operativas de seguridad.

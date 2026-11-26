@@ -126,6 +126,28 @@ def oscilaciones():
     return render_template("oscilaciones.html")
 
 
+@app.route("/api/oscilaciones/simular", methods=["POST"])
+def api_oscilaciones_simular():
+    """Ejecuta el módulo 3 y devuelve resultados numéricos para la interfaz."""
+    try:
+        from backend.modulos.oscilaciones import ejecutar, CASOS
+        datos = request.get_json(silent=True) or {}
+        resultado = ejecutar(datos)
+        escenario = str(datos.get("escenario", "personalizado")).lower()
+        if escenario in CASOS:
+            resultado["escenario"] = CASOS[escenario].nombre
+            resultado["descripcion"] = CASOS[escenario].descripcion
+        return jsonify(resultado), 200
+    except (ValueError, TypeError, KeyError) as error:
+        return jsonify({"ok": False, "error": str(error)}), 400
+    except Exception:
+        app.logger.exception("Error al ejecutar el módulo de oscilaciones")
+        return jsonify({
+            "ok": False,
+            "error": "Ocurrió un error interno al calcular las oscilaciones."
+        }), 500
+
+
 @app.route("/sensores")
 def sensores():
     return render_template("sensores.html")
@@ -1680,6 +1702,307 @@ def obtener_historial():
             "exito": False,
             "error": "No se pudo obtener el historial de simulaciones."
         }), 500
+
+
+# ==========================================
+# MODULO 2: INTEGRACION Y MANTENIMIENTO
+# ==========================================
+
+def obtener_escenario_deterioro(tipo, descripcion):
+    """Obtiene o crea un escenario del Módulo 2 sin modificar el esquema SQL."""
+    caso = CasoEstudio.query.filter_by(modulo="deterioro").first()
+    if caso is None:
+        caso = CasoEstudio(
+            nombre="Deterioro mecánico y mantenimiento",
+            modelo_version="1.0",
+            modulo="deterioro"
+        )
+        db.session.add(caso)
+        db.session.flush()
+
+    escenario = Escenario.query.filter_by(
+        caso_id=caso.id,
+        tipo=tipo
+    ).first()
+    if escenario is None:
+        escenario = Escenario(
+            caso_id=caso.id,
+            tipo=tipo,
+            parametros_json={"descripcion": descripcion},
+            fuente_datos="Mediciones registradas de componentes mecánicos"
+        )
+        db.session.add(escenario)
+        db.session.flush()
+    return escenario
+
+
+def guardar_resultado_modulo2(tipo_escenario, descripcion, metodo, componente,
+                              resultado, tiempo_ms, iteraciones=None):
+    escenario = obtener_escenario_deterioro(tipo_escenario, descripcion)
+    simulacion = Simulacion(escenario_id=escenario.id, estado="COMPLETADA")
+    db.session.add(simulacion)
+    db.session.flush()
+    ejecucion = EjecucionMetodo(
+        simulacion_id=simulacion.id,
+        metodo=metodo,
+        tolerancia=resultado.get("tolerancia"),
+        paso=resultado.get("paso"),
+        max_iter=resultado.get("max_iter"),
+        convergio=bool(resultado.get("convergio", True)),
+        tiempo_ms=tiempo_ms
+    )
+    db.session.add(ejecucion)
+    db.session.flush()
+    for numero, dato in enumerate(iteraciones or [], start=1):
+        db.session.add(IteracionResultado(
+            ejecucion_id=ejecucion.id,
+            numero=numero,
+            aproximacion_json=dato,
+            residual=dato.get("area") if isinstance(dato, dict) else None,
+            error_abs=None,
+            error_rel=None
+        ))
+    db.session.add(ResultadoResumen(
+        ejecucion_id=ejecucion.id,
+        referencia=f"Componente {componente.codigo} - {componente.nombre}",
+        valor_json=resultado.get("valor"),
+        metrica_error_json=resultado.get("metricas", {}),
+        interpretacion=resultado.get("interpretacion", "")
+    ))
+    return simulacion
+
+
+@app.route("/api/integracion/deterioro", methods=["POST"])
+def integrar_deterioro():
+    datos = request.get_json(silent=True) or {}
+    try:
+        componente_id = int(datos.get("componente_id"))
+    except (TypeError, ValueError):
+        return jsonify({"exito": False, "error": "Selecciona un componente válido."}), 400
+
+    componente = db.session.get(ComponenteMecanico, componente_id)
+    if componente is None:
+        return jsonify({"exito": False, "error": "El componente no existe."}), 404
+
+    mediciones = MedicionDeterioro.query.filter_by(
+        componente_id=componente.id
+    ).order_by(MedicionDeterioro.tiempo.asc(), MedicionDeterioro.id.asc()).all()
+    if len(mediciones) < 2:
+        return jsonify({"exito": False, "error": "Se necesitan al menos dos mediciones para integrar."}), 400
+
+    tiempos = [float(m.tiempo) for m in mediciones]
+    deterioros = [float(m.deterioro) for m in mediciones]
+    if any(tiempos[i] >= tiempos[i + 1] for i in range(len(tiempos) - 1)):
+        return jsonify({"exito": False, "error": "Las mediciones deben tener tiempos diferentes para aplicar el trapecio compuesto."}), 400
+
+    inicio = perf_counter()
+    detalle = []
+    integral = 0.0
+    for i in range(len(tiempos) - 1):
+        delta_t = tiempos[i + 1] - tiempos[i]
+        area = ((deterioros[i] + deterioros[i + 1]) / 2.0) * delta_t
+        integral += area
+        detalle.append({
+            "intervalo": i + 1,
+            "tiempo_inicial": tiempos[i],
+            "tiempo_final": tiempos[i + 1],
+            "deterioro_inicial": deterioros[i],
+            "deterioro_final": deterioros[i + 1],
+            "delta_t": delta_t,
+            "area": area
+        })
+    tiempo_ms = (perf_counter() - inicio) * 1000
+
+    try:
+        resultado = {
+            "valor": integral,
+            "metricas": {"mediciones": len(mediciones), "intervalos": len(detalle),
+                         "tiempo_inicial": tiempos[0], "tiempo_final": tiempos[-1]},
+            "interpretacion": "La integral aproxima el área bajo la curva de deterioro durante el intervalo observado. No representa por sí sola el deterioro actual ni una fecha de mantenimiento."
+        }
+        simulacion = guardar_resultado_modulo2(
+            "INTEGRACION_TRAPECIO", "Integración del deterioro mediante trapecio compuesto",
+            "TRAPECIO_COMPUESTO", componente, resultado, tiempo_ms, detalle
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("No se pudo guardar la integración del deterioro")
+        return jsonify({"exito": False, "error": "No se pudo guardar el resultado de integración."}), 500
+
+    return jsonify({
+        "exito": True,
+        "simulacion_id": simulacion.id,
+        "componente": {"id": componente.id, "codigo": componente.codigo, "nombre": componente.nombre,
+                       "unidad": componente.unidad_indicador},
+        "integral": integral,
+        "mediciones": len(mediciones),
+        "tiempo_inicial": tiempos[0], "tiempo_final": tiempos[-1],
+        "tiempos": tiempos, "deterioros": deterioros, "detalle": detalle
+    })
+
+
+@app.route("/api/mantenimiento/componentes", methods=["GET"])
+def estado_componentes_mantenimiento():
+    componentes = ComponenteMecanico.query.order_by(ComponenteMecanico.nombre.asc()).all()
+    respuesta = []
+    for componente in componentes:
+        mediciones = MedicionDeterioro.query.filter_by(
+            componente_id=componente.id
+        ).order_by(MedicionDeterioro.tiempo.asc()).all()
+        ultima = mediciones[-1] if mediciones else None
+        actual = float(ultima.deterioro) if ultima else None
+        umbral = float(componente.umbral_inspeccion) if componente.umbral_inspeccion is not None else None
+        if actual is None:
+            estado = "Sin mediciones"
+        elif umbral is not None and actual >= umbral:
+            estado = "Requiere inspección"
+        else:
+            estado = "Dentro del umbral"
+        respuesta.append({
+            "id": componente.id, "codigo": componente.codigo, "nombre": componente.nombre,
+            "unidad": componente.unidad_indicador, "actual": actual, "umbral": umbral,
+            "cantidad_mediciones": len(mediciones), "estado": estado
+        })
+    return jsonify({"exito": True, "componentes": respuesta})
+
+
+@app.route("/api/mantenimiento/predecir", methods=["POST"])
+def predecir_mantenimiento():
+    datos = request.get_json(silent=True) or {}
+    try:
+        componente_id = int(datos.get("componente_id"))
+    except (TypeError, ValueError):
+        return jsonify({"exito": False, "error": "Selecciona un componente válido."}), 400
+    componente = db.session.get(ComponenteMecanico, componente_id)
+    if componente is None:
+        return jsonify({"exito": False, "error": "El componente no existe."}), 404
+    if componente.umbral_inspeccion is None:
+        return jsonify({"exito": False, "error": "El componente no tiene umbral de inspección."}), 400
+    mediciones = MedicionDeterioro.query.filter_by(
+        componente_id=componente.id
+    ).order_by(MedicionDeterioro.tiempo.asc()).all()
+    if len(mediciones) < 3:
+        return jsonify({"exito": False, "error": "Se necesitan al menos tres mediciones para construir el modelo cuadrático."}), 400
+
+    tiempos = [m.tiempo for m in mediciones]
+    deterioros = [m.deterioro for m in mediciones]
+    try:
+        modelo = ajustar_modelo_cuadratico(tiempos, deterioros)
+        tiempo_actual = max(tiempos)
+        deterioro_actual = float(modelo["funcion"](tiempo_actual))
+        umbral = float(componente.umbral_inspeccion)
+        if deterioro_actual >= umbral:
+            return jsonify({"exito": True, "ya_alcanzo": True,
+                "componente": componente.nombre, "actual": deterioro_actual,
+                "umbral": umbral, "mensaje": "El último valor del modelo ya alcanzó o superó el umbral. Se recomienda inspección."})
+        funcion = lambda t: modelo["funcion"](t) - umbral
+        a, b = buscar_intervalo_raiz_futura(
+            funcion, tiempo_actual, max(max(tiempos) - min(tiempos), 1.0)
+        )
+        inicio = perf_counter()
+        raiz = metodo_biseccion(funcion, a, b, 1e-6, 200)
+        tiempo_ms = (perf_counter() - inicio) * 1000
+        if not raiz.get("convergio") or raiz.get("solucion") is None:
+            return jsonify({"exito": False, "error": "No se pudo estimar el cruce del umbral con los datos disponibles."}), 400
+        tiempo_estimado = float(raiz["solucion"])
+        restante = max(0.0, tiempo_estimado - tiempo_actual)
+        resultado = {"valor": tiempo_estimado,
+            "metricas": {"tiempo_actual": tiempo_actual, "tiempo_restante": restante,
+                         "deterioro_actual": deterioro_actual, "umbral": umbral,
+                         "error_absoluto": raiz.get("error_abs"), "residual": raiz.get("residual"),
+                         "iteraciones": raiz.get("iteraciones")},
+            "interpretacion": f"El modelo estima que el umbral se alcanzará en {restante:.6g} unidades de tiempo desde la última medición. Es una predicción basada en datos hipotéticos."}
+        simulacion = guardar_resultado_modulo2(
+            "PREDICCION_MANTENIMIENTO", "Predicción del tiempo hasta el umbral de inspección",
+            "BISECCION_MANTENIMIENTO", componente, resultado, tiempo_ms,
+            raiz.get("historial", [])
+        )
+        db.session.add(AnalisisRaices(
+            simulacion_id=simulacion.id, componente_id=componente.id, umbral=umbral,
+            parametros_modelo={"D0": modelo["D0"], "alpha": modelo["alpha"],
+                "beta": modelo["beta"], "modelo": modelo["modelo"],
+                "error_cuadratico": modelo["error_cuadratico"]}
+        ))
+        db.session.commit()
+        return jsonify({"exito": True, "simulacion_id": simulacion.id,
+            "componente": componente.nombre, "actual": deterioro_actual,
+            "umbral": umbral, "tiempo_actual": tiempo_actual,
+            "tiempo_estimado": tiempo_estimado, "tiempo_restante": restante,
+            "error": raiz.get("error_abs"), "residual": raiz.get("residual"),
+            "iteraciones": raiz.get("iteraciones"), "unidad": componente.unidad_indicador})
+    except ValueError as error:
+        db.session.rollback()
+        return jsonify({"exito": False, "error": str(error)}), 400
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error al predecir mantenimiento")
+        return jsonify({"exito": False, "error": "No se pudo calcular la predicción de mantenimiento."}), 500
+
+
+@app.route("/api/mantenimiento/simular", methods=["POST"])
+def simular_intervencion_mantenimiento():
+    datos = request.get_json(silent=True) or {}
+    try:
+        componente_id = int(datos.get("componente_id"))
+        reduccion = float(datos.get("reduccion_porcentaje"))
+        if not math.isfinite(reduccion) or reduccion <= 0 or reduccion >= 100:
+            raise ValueError("La reducción debe estar entre 1 y 99 por ciento.")
+    except (TypeError, ValueError) as error:
+        return jsonify({"exito": False, "error": str(error) or "Datos inválidos."}), 400
+    componente = db.session.get(ComponenteMecanico, componente_id)
+    if componente is None:
+        return jsonify({"exito": False, "error": "El componente no existe."}), 404
+    if componente.umbral_inspeccion is None:
+        return jsonify({"exito": False, "error": "El componente no tiene umbral de inspección."}), 400
+    mediciones = MedicionDeterioro.query.filter_by(
+        componente_id=componente.id
+    ).order_by(MedicionDeterioro.tiempo.asc()).all()
+    if len(mediciones) < 3:
+        return jsonify({"exito": False, "error": "Se necesitan al menos tres mediciones para simular la intervención."}), 400
+    try:
+        modelo = ajustar_modelo_cuadratico([m.tiempo for m in mediciones], [m.deterioro for m in mediciones])
+        tiempo_actual = max(m.tiempo for m in mediciones)
+        actual = float(modelo["funcion"](tiempo_actual))
+        despues = actual * (1.0 - reduccion / 100.0)
+        umbral = float(componente.umbral_inspeccion)
+        restante = None
+        if despues < umbral:
+            pendiente = modelo["alpha"] + 2.0 * modelo["beta"] * tiempo_actual
+            def funcion_futura(tau):
+                return despues + pendiente * tau + modelo["beta"] * tau * tau - umbral
+            if funcion_futura(0.0) < 0:
+                a, b = buscar_intervalo_raiz_futura(
+                    funcion_futura, 0.0, max(max(m.tiempo for m in mediciones) - min(m.tiempo for m in mediciones), 1.0)
+                )
+                inicio = perf_counter()
+                raiz = metodo_biseccion(funcion_futura, a, b, 1e-6, 200)
+                tiempo_ms = (perf_counter() - inicio) * 1000
+                if raiz.get("convergio") and raiz.get("solucion") is not None:
+                    restante = float(raiz["solucion"])
+        else:
+            tiempo_ms = 0.0
+        resultado = {"valor": {"antes": actual, "despues": despues, "tiempo_restante": restante},
+            "metricas": {"reduccion_porcentaje": reduccion, "umbral": umbral,
+                         "tiempo_actual": tiempo_actual},
+            "interpretacion": "Simulación hipotética: se reduce el indicador actual y se prolonga el modelo cuadrático usando la pendiente estimada en la última medición. No registra una intervención real ni modifica las mediciones originales."}
+        simulacion = guardar_resultado_modulo2(
+            "SIMULACION_INTERVENCION", "Simulación hipotética de mantenimiento preventivo",
+            "INTERVENCION_HIPOTETICA", componente, resultado, tiempo_ms
+        )
+        db.session.commit()
+        return jsonify({"exito": True, "simulacion_id": simulacion.id,
+            "antes": actual, "despues": despues, "reduccion_porcentaje": reduccion,
+            "tiempo_restante": restante, "umbral": umbral,
+            "mensaje": "La intervención hipotética se simuló y guardó. Las mediciones originales no fueron modificadas."})
+    except ValueError as error:
+        db.session.rollback()
+        return jsonify({"exito": False, "error": str(error)}), 400
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error al simular intervención de mantenimiento")
+        return jsonify({"exito": False, "error": "No se pudo simular la intervención."}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)

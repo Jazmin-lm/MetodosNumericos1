@@ -1622,3 +1622,166 @@ td {
     border-radius: 8px;
     margin-top: 15px !important;
 }
+
+/* Integración y mantenimiento del Módulo 2 */
+#integracion .tarjeta-raices,
+#mantenimiento .tarjeta-raices {
+    background: #fff;
+    border: 1px solid #e7ebf1;
+    border-radius: 11px;
+    padding: 22px;
+    margin-bottom: 20px;
+}
+#integracion .indicadores-raices,
+#mantenimiento .indicadores-raices {
+    margin: 18px 0;
+}
+#integracion .btn-ejecutar-raices:disabled,
+#mantenimiento .btn-ejecutar-raices:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+#integracion canvas {
+    max-height: 330px;
+}
+@media (max-width: 768px) {
+    #integracion .tarjeta-raices,
+    #mantenimiento .tarjeta-raices { padding: 15px; }
+}
+
+/* Presentación mejorada: integración y planificación de mantenimiento */
+#integracion, #mantenimiento { padding-bottom: 34px; }
+#integracion .encabezado-seccion, #mantenimiento .encabezado-seccion {
+    margin-bottom: 22px;
+}
+#integracion .encabezado-seccion h2, #mantenimiento .encabezado-seccion h2 {
+    color: #172b4d; font-size: 27px; font-weight: 750; letter-spacing: -.45px;
+    margin: 5px 0 8px;
+}
+#integracion .encabezado-seccion p, #mantenimiento .encabezado-seccion p {
+    color: #64748b; max-width: 820px; line-height: 1.65; font-size: 14px;
+}
+#integracion .tarjeta-informacion, #mantenimiento .tarjeta-informacion {
+    background: linear-gradient(135deg, #eff6ff 0%, #f8fbff 100%);
+    border: 1px solid #d9e7fb; border-left: 4px solid #3478d4;
+    border-radius: 13px; padding: 21px 24px; margin-bottom: 20px;
+    box-shadow: 0 5px 18px rgba(35, 73, 125, .045);
+}
+#integracion .tarjeta-informacion h3, #mantenimiento .tarjeta-informacion h3 {
+    color: #1e3a5f; font-size: 16px; margin-bottom: 9px;
+}
+#integracion .tarjeta-informacion p, #mantenimiento .tarjeta-informacion p {
+    color: #53657c; font-size: 13.5px; line-height: 1.7;
+}
+#integracion .formula-raices, #mantenimiento .formula-raices {
+    display: inline-block; margin-top: 13px; padding: 10px 14px;
+    background: rgba(255,255,255,.8); border: 1px solid #dce8f6;
+    border-radius: 8px; color: #24558d; font-weight: 650;
+}
+#integracion .tarjeta-raices, #mantenimiento .tarjeta-raices {
+    background: #fff; border: 1px solid #e3e9f1; border-radius: 14px;
+    padding: 24px; margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(22, 40, 70, .045);
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+#integracion .tarjeta-raices:hover, #mantenimiento .tarjeta-raices:hover {
+    box-shadow: 0 9px 25px rgba(22, 45, 78, .075);
+}
+#integracion .titulo-tarjeta, #mantenimiento .titulo-tarjeta { margin-bottom: 19px; }
+#integracion .titulo-tarjeta h3, #mantenimiento .titulo-tarjeta h3 {
+    color: #1e293b; font-size: 17px; font-weight: 700; margin-bottom: 6px;
+}
+#integracion .titulo-tarjeta p, #mantenimiento .titulo-tarjeta p {
+    color: #718096; font-size: 13px; line-height: 1.55;
+}
+#integracion .configuracion-raices, #mantenimiento .configuracion-raices {
+    display: grid; grid-template-columns: minmax(220px, 440px); gap: 16px;
+    margin: 18px 0;
+}
+#integracion .campo-raices label, #mantenimiento .campo-raices label {
+    display: block; color: #34445b; font-size: 13px; font-weight: 650; margin-bottom: 8px;
+}
+#integracion .campo-raices select, #mantenimiento .campo-raices select,
+#mantenimiento .campo-raices input {
+    width: 100%; min-height: 43px; padding: 10px 12px; border: 1px solid #d5deea;
+    border-radius: 8px; background: #fff; color: #263449; font: inherit; font-size: 13px;
+    outline: none; transition: border-color .2s, box-shadow .2s;
+}
+#integracion .campo-raices select:focus, #mantenimiento .campo-raices select:focus,
+#mantenimiento .campo-raices input:focus {
+    border-color: #4285dc; box-shadow: 0 0 0 3px rgba(66,133,220,.13);
+}
+#integracion .campo-raices small, #mantenimiento .campo-raices small {
+    display: block; color: #8190a4; font-size: 11.5px; margin-top: 7px;
+}
+#integracion .btn-ejecutar-raices, #mantenimiento .btn-ejecutar-raices {
+    min-height: 42px; padding: 10px 19px; border: 0; border-radius: 8px;
+    background: #2868bd; color: #fff; font-size: 13px; font-weight: 650;
+    cursor: pointer; box-shadow: 0 3px 8px rgba(40,104,189,.18);
+    transition: background .2s, transform .2s, box-shadow .2s;
+}
+#integracion .btn-ejecutar-raices:hover, #mantenimiento .btn-ejecutar-raices:hover {
+    background: #1f559d; transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(40,104,189,.23);
+}
+#integracion .btn-ejecutar-raices:disabled, #mantenimiento .btn-ejecutar-raices:disabled {
+    opacity: .55; cursor: not-allowed; transform: none; box-shadow: none;
+}
+#integracion .tabla-contenedor-raices, #mantenimiento .tabla-contenedor-raices {
+    width: 100%; overflow-x: auto; border: 1px solid #e7edf4; border-radius: 10px;
+}
+#integracion .tabla-contenedor-raices table, #mantenimiento .tabla-contenedor-raices table {
+    width: 100%; min-width: 620px; border-collapse: collapse;
+}
+#integracion .tabla-contenedor-raices th, #mantenimiento .tabla-contenedor-raices th {
+    padding: 13px 14px; background: #f4f7fb; color: #52637a; text-align: left;
+    font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: .35px;
+    border-bottom: 1px solid #e3eaf2; white-space: nowrap;
+}
+#integracion .tabla-contenedor-raices td, #mantenimiento .tabla-contenedor-raices td {
+    padding: 13px 14px; color: #46566c; font-size: 12.5px;
+    border-bottom: 1px solid #edf1f6;
+}
+#integracion .tabla-contenedor-raices tbody tr:hover,
+#mantenimiento .tabla-contenedor-raices tbody tr:hover { background: #f8fbff; }
+#integracion .tabla-contenedor-raices tbody tr:last-child td,
+#mantenimiento .tabla-contenedor-raices tbody tr:last-child td { border-bottom: 0; }
+#mantenimiento .estado-mantenimiento-etiqueta {
+    display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+#mantenimiento .estado-normal { color: #08764f; background: #e7f7ef; }
+#mantenimiento .estado-alerta { color: #a43b25; background: #fff0eb; }
+#mantenimiento .estado-pendiente { color: #8a6416; background: #fff7df; }
+#integracion .indicadores-raices, #mantenimiento .indicadores-raices {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px;
+    margin: 18px 0 22px;
+}
+#integracion .indicador-raices, #mantenimiento .indicador-raices {
+    min-width: 0; padding: 18px 19px; border: 1px solid #e3eaf3;
+    border-radius: 11px; background: linear-gradient(180deg, #fff, #f9fbfe);
+}
+#integracion .indicador-raices span, #mantenimiento .indicador-raices span {
+    display: block; color: #718096; font-size: 11.5px; font-weight: 650; margin-bottom: 9px;
+}
+#integracion .indicador-raices strong, #mantenimiento .indicador-raices strong {
+    display: block; color: #1e3a5f; font-size: 24px; line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+#integracion .indicador-raices small, #mantenimiento .indicador-raices small {
+    display: block; color: #91a0b2; font-size: 11px; margin-top: 7px;
+}
+#integracion .mensaje-raices, #mantenimiento .mensaje-raices,
+#mantenimiento .resumen-iteraciones-raices, #integracion .resumen-iteraciones-raices {
+    margin-top: 14px; line-height: 1.65; font-size: 12.5px;
+}
+#integracion canvas { max-height: 330px; }
+@media (max-width: 800px) {
+    #integracion .indicadores-raices, #mantenimiento .indicadores-raices { grid-template-columns: 1fr; }
+    #integracion .tarjeta-raices, #mantenimiento .tarjeta-raices,
+    #integracion .tarjeta-informacion, #mantenimiento .tarjeta-informacion { padding: 17px; }
+    #integracion .encabezado-seccion h2, #mantenimiento .encabezado-seccion h2 { font-size: 23px; }
+}
+
+/* Al retirar el panel de estado vacío, el gráfico ocupa todo el ancho disponible. */
+.panel-graficos { grid-template-columns: minmax(0, 1fr); }

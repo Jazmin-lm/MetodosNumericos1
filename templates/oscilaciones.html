@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oscilaciones por viento | SIMTELE-RISK</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root{--navy:#0b192c;--navy2:#10243e;--blue:#2563eb;--blue2:#087dcc;--ink:#172b46;--muted:#718096;--line:#dce7f4;--pale:#f2f7fd}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(180deg,#e9f2fc 0%,#f5f8fc 55%,#e6f0fb 100%);color:var(--ink)}
+.app{display:flex;min-height:100vh}.sidebar{width:255px;flex-shrink:0;background:linear-gradient(180deg,var(--navy),var(--navy2));color:#fff;padding:22px 16px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:11px;padding:3px 8px 25px;border-bottom:1px solid #ffffff16}.brand-icon{width:40px;height:40px;border-radius:10px;background:#2563eb;display:grid;place-items:center;font-weight:800}.brand strong{font-size:14px;letter-spacing:.4px}.brand small{display:block;color:#9fb2ca;font-size:10px;margin-top:3px}
+.side-label{font-size:10px;color:#8ea5c1;letter-spacing:1.4px;font-weight:800;margin:24px 9px 10px}.nav{display:grid;gap:5px}.nav a{color:#bdc9d8;text-decoration:none;font-size:12px;padding:11px 12px;border-radius:8px;transition:.2s}.nav a:hover,.nav a.active{background:#29466b;color:white}.nav a.active{border-left:3px solid #5791ff}
+.side-bottom{margin-top:auto;border-top:1px solid #ffffff16;padding:18px 8px 3px;font-size:11px;color:#9fb2ca}.side-bottom a{display:block;color:#d5e4f6;text-decoration:none;margin-top:13px}
+.content{flex:1;min-width:0;padding:28px 34px 45px}.topbar{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #dce5ef;padding-bottom:20px;margin-bottom:25px;gap:12px}.eyebrow{color:#2563eb;font-size:10px;letter-spacing:1.3px;font-weight:800}.topbar h1{font-size:24px;font-weight:800;margin:5px 0}.topbar p{font-size:12px;color:var(--muted)}.top-tag{font-size:11px;background:#e3f1ff;color:#1d4ed8;padding:8px 12px;border-radius:20px;font-weight:700}
+.panel{background:linear-gradient(180deg,#f9fbff,#edf4fd);border:1px solid #bfd7f8;border-radius:14px;padding:20px;box-shadow:0 4px 14px #0f2a520d;margin-bottom:18px}.panel h2{font-size:16px;font-weight:800;color:#183451;margin-bottom:13px}.panel h3{font-size:13px;font-weight:750;color:#203b5b;margin-bottom:9px}.layout{display:grid;grid-template-columns:minmax(285px,340px) minmax(0,1fr);gap:18px;align-items:start}
+.scenarios{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.scenario{border:1px solid #b8d4f8;background:#f3f8ff;color:#1e3a8a;border-radius:8px;padding:10px 5px;font-size:10px;font-weight:800;cursor:pointer}.scenario.active{background:linear-gradient(135deg,#1d4ed8,#2563eb);border-color:#1e40af;color:white;box-shadow:0 5px 12px #2563eb30}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.field label{display:block;font-size:10px;color:#64748b;font-weight:700;margin:10px 0 5px}.field input,.field select{width:100%;padding:9px 10px;border:1px solid #b8d4f8;border-radius:8px;background:#f8fbff;color:#172b46;font:inherit;font-size:12px}.field input:focus,.field select:focus{outline:2px solid #2563eb35;border-color:#2563eb}
+.equation{background:#e4effc;border:1px solid #c4daf5;border-radius:9px;padding:12px;color:#1e3a5f;font-family:Georgia,serif;font-size:13px;line-height:1.8;margin:12px 0}.muted{color:#718096;font-size:11px;line-height:1.6}.btn{border:0;border-radius:8px;padding:10px 13px;font-size:11px;font-weight:800;cursor:pointer}.btn-primary{background:#087dcc;color:#fff}.btn-primary:hover{background:#0565a8}.btn-secondary{background:#e5edf8;color:#36506d}.btn-secondary:hover{background:#d6e5f8}.actions{display:flex;gap:8px;margin-top:15px}.actions .btn{flex:1}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:13px}.metric{background:#fff;border:1px solid #dce7f4;border-radius:11px;padding:13px;min-width:0}.metric small{display:block;color:#718096;font-size:10px;line-height:1.4}.metric strong{display:block;font-size:17px;color:#1e3a5f;margin-top:7px;overflow-wrap:anywhere}.unit{font-size:10px;color:#718096}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}.chart{background:#fff;border:1px solid #dce7f4;border-radius:10px;padding:12px;min-width:0}.chart canvas{width:100%;height:220px;display:block}.status{margin-top:13px;padding:11px 13px;border-radius:8px;background:#e3f7ee;border:1px solid #a9e6c8;color:#176344;font-size:11px}.status.err{background:#fff0f0;border-color:#f2b8bd;color:#a12b38}
+.table-wrap{overflow:auto;border:1px solid #dce7f4;border-radius:9px;background:white;max-height:350px}table{border-collapse:collapse;width:100%;font-size:11px}th,td{padding:9px 10px;border-bottom:1px solid #e8eef6;text-align:right;white-space:nowrap}th{position:sticky;top:0;background:#eaf2fc;color:#29466b;font-weight:800}td:first-child,th:first-child{text-align:left}
+.callout{background:#e6f1fd;border-left:3px solid #2563eb;border-radius:0 8px 8px 0;padding:11px 13px;font-size:11px;color:#36506d;line-height:1.7}.history-item{background:#fff;border:1px solid #dce7f4;border-radius:8px;padding:10px;margin-top:8px;font-size:11px}.history-item button{margin-top:6px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}.section-note{font-size:10px;color:#718096;margin-top:-6px;margin-bottom:12px}.hidden{display:none!important}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:720px){.app{display:block}.sidebar{width:100%;padding:14px}.brand{padding-bottom:12px}.side-label,.side-bottom{display:none}.nav{grid-template-columns:repeat(3,1fr);margin-top:12px}.nav a{text-align:center;padding:9px 4px;font-size:10px}.content{padding:20px 13px}.topbar{align-items:flex-start}.topbar h1{font-size:20px}.top-tag{display:none}.charts,.two-col{grid-template-columns:1fr}.field-grid{grid-template-columns:1fr 1fr}.panel{padding:15px}.scenarios{grid-template-columns:1fr}.metrics{gap:7px}.metric{padding:10px}.metric strong{font-size:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-icon">S</div><div><strong>SIMTELE-RISK</strong><small>Plataforma de análisis</small></div></div>
+  <div class="side-label">MÓDULO 03 · OSCILACIONES</div>
+  <nav class="nav">
+    <a class="active" href="#configuracion">Configuración</a>
+    <a href="#resultados">Resultados</a>
+    <a href="#comparacion">Métodos</a>
+    <a href="#iteraciones">Iteraciones</a>
+    <a href="#analisis">Análisis</a>
+    <a href="#historial">Historial</a>
+  </nav>
+  <div class="side-bottom">Simulación académica<br><a href="/">← Volver al inicio</a></div>
+</aside>
+<main class="content">
+  <header class="topbar">
+    <div><div class="eyebrow">MÓDULO 03 · MÉTODOS NUMÉRICOS I</div><h1>Oscilaciones por viento</h1><p>Respuesta dinámica de una cabina sometida a una fuerza periódica de viento.</p></div>
+    <span class="top-tag">SIMULACIÓN EDUCATIVA</span>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <section class="panel" id="configuracion">
+        <h2>1. Escenario de prueba</h2>
+        <div class="scenarios">
+          <button class="scenario active" data-case="normal">NORMAL</button>
+          <button class="scenario" data-case="stress">ESTRÉS</button>
+          <button class="scenario" data-case="ill">MAL CONDICIONADO</button>
+        </div>
+        <div id="scenarioDescription" class="callout">Condiciones nominales: fuerza moderada y amortiguamiento suficiente.</div>
+        <div class="equation">x′(t) = v(t)<br>v′(t) = [F(t) − c·v(t) − k·x(t)] / m<br><small>F(t) = F₀ sen(ωt + φ)</small></div>
+        <h3>Parámetros físicos</h3>
+        <div class="field-grid">
+          <div class="field"><label for="m">Masa m (kg)</label><input id="m" type="number" min=".1" step="1" value="800"></div>
+          <div class="field"><label for="c">Amortiguamiento c (N·s/m)</label><input id="c" type="number" min="0" step="10" value="900"></div>
+          <div class="field"><label for="k">Rigidez k (N/m)</label><input id="k" type="number" min=".1" step="100" value="12000"></div>
+          <div class="field"><label for="F0">Amplitud F₀ (N)</label><input id="F0" type="number" step="10" value="500"></div>
+          <div class="field"><label for="omega">Frecuencia ω (rad/s)</label><input id="omega" type="number" min="0" step=".01" value="1.8"></div>
+          <div class="field"><label for="phi">Fase φ (rad)</label><input id="phi" type="number" step=".1" value="0"></div>
+          <div class="field"><label for="x0">Desplazamiento inicial (m)</label><input id="x0" type="number" step=".001" value=".02"></div>
+          <div class="field"><label for="v0">Velocidad inicial (m/s)</label><input id="v0" type="number" step=".001" value="0"></div>
+          <div class="field"><label for="T">Tiempo T (s)</label><input id="T" type="number" min=".1" step="1" value="20"></div>
+          <div class="field"><label for="N">Pasos N</label><select id="N"><option>128</option><option>256</option><option selected>512</option><option>1024</option><option>2048</option></select></div>
+        </div>
+        <div class="actions"><button class="btn btn-primary" id="simulate">▶ Resolver módulo</button><button class="btn btn-secondary" id="reset">Restablecer</button></div>
+        <p class="muted" style="margin-top:12px">Los parámetros son sintéticos y editables. N debe ser potencia de dos para Romberg y par para Simpson 1/3.</p>
+      </section>
+      <section class="panel">
+        <h2>2. Métodos implementados</h2>
+        <p class="muted"><b>EDO:</b> Runge-Kutta de segundo orden (punto medio) y Runge-Kutta de cuarto orden.</p>
+        <p class="muted" style="margin-top:8px"><b>Integración:</b> Trapecio compuesto, Simpson 1/3 compuesto y Romberg sobre la magnitud x²(t).</p>
+        <p class="muted" style="margin-top:8px">La referencia de error es una solución RK4 recalculada con cuatro veces más pasos.</p>
+      </section>
+      <section class="panel" id="historial">
+        <h2>3. Historial local de pruebas</h2>
+        <p class="muted">Las ejecuciones se guardan en este navegador. Este historial no sustituye el almacenamiento multiusuario del proyecto.</p>
+        <div class="actions"><button class="btn btn-secondary" id="save">Guardar ejecución</button><button class="btn btn-secondary" id="csv">Exportar CSV</button></div>
+        <div id="history"><p class="muted" style="margin-top:10px">Todavía no hay ejecuciones guardadas.</p></div>
+      </section>
+    </aside>
+
+    <div>
+      <section class="panel" id="resultados">
+        <h2>Resultados de la simulación</h2>
+        <div class="metrics">
+          <div class="metric"><small>Máximo |x(t)|</small><strong id="mx">—</strong><span class="unit">m</span></div>
+          <div class="metric"><small>Máximo |v(t)|</small><strong id="mv">—</strong><span class="unit">m/s</span></div>
+          <div class="metric"><small>Integral I = ∫x²dt (Romberg)</small><strong id="integ">—</strong><span class="unit">m²·s</span></div>
+          <div class="metric"><small>Error máximo RK4 vs. ref.</small><strong id="err">—</strong><span class="unit">m</span></div>
+        </div>
+        <div class="charts">
+          <div class="chart"><h3>Desplazamiento x(t)</h3><canvas id="cx"></canvas></div>
+          <div class="chart"><h3>Velocidad v(t)</h3><canvas id="cv"></canvas></div>
+        </div>
+        <div id="status" class="status">Listo para resolver. Los valores iniciales corresponden al escenario NORMAL.</div>
+      </section>
+
+      <section class="panel" id="comparacion">
+        <h2>Comparación de métodos de integración</h2>
+        <p class="section-note">Se calcula I = ∫₀ᵀ x²(t) dt a partir de la trayectoria RK4.</p>
+        <div class="table-wrap"><table><thead><tr><th>Método</th><th>Resultado I</th><th>Error absoluto vs. Romberg</th></tr></thead><tbody id="quad"><tr><td colspan="3">Ejecutá la simulación.</td></tr></tbody></table></div>
+      </section>
+
+      <section class="panel" id="iteraciones">
+        <h2>Tabla de iteraciones RK4</h2><p class="section-note">Muestra hasta 100 puntos distribuidos en el intervalo completo.</p>
+        <div class="table-wrap"><table><thead><tr><th>t (s)</th><th>x (m)</th><th>v (m/s)</th><th>F(t) (N)</th></tr></thead><tbody id="iterations"><tr><td colspan="4">Sin datos.</td></tr></tbody></table></div>
+      </section>
+
+      <section class="panel" id="analisis">
+        <h2>Análisis de sensibilidad y errores</h2>
+        <div id="sensitivity" class="callout">Se calculará una perturbación del 1% en masa, amortiguamiento y rigidez para comparar la respuesta.</div>
+        <div class="two-col" style="margin-top:12px">
+          <div class="metric"><h3>Conclusión numérica</h3><p id="numeric" class="muted">Conclusión numérica pendiente.</p></div>
+          <div class="metric"><h3>Conclusión física</h3><p id="physical" class="muted">Conclusión física pendiente.</p></div>
+        </div>
+        <p class="muted" style="margin-top:12px">Nota metodológica: los escenarios son sintéticos, reproducibles y editables. El caso mal condicionado representa sensibilidad matemática, no una falla física ni una evaluación de seguridad real.</p>
+      </section>
+    </div>
+  </div>
+  <footer class="text-center text-xs text-slate-500 py-5">SIMTELE-RISK · Módulo 3 · Simulación educativa; no utilizar para decisiones operativas de seguridad.</footer>
+</main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const presets={
+ normal:{m:800,c:900,k:12000,F0:500,omega:1.8,phi:0,x0:.02,v0:0,T:20,N:512},
+ stress:{m:800,c:420,k:12000,F0:1800,omega:3.2,phi:0,x0:.02,v0:0,T:20,N:512},
+ ill:{m:800,c:100,k:12000,F0:500,omega:Math.sqrt(12000/800)*.995,phi:0,x0:.02,v0:0,T:20,N:1024}
+};
+const descriptions={
+ normal:'Condiciones nominales: fuerza moderada y amortiguamiento suficiente. Se utiliza como línea base de comparación.',
+ stress:'Condición exigente: aumenta la fuerza y la frecuencia de excitación, mientras se reduce el amortiguamiento.',
+ ill:'Alta sensibilidad: excitación cercana a la frecuencia natural ωₙ = √(k/m), con amortiguamiento reducido. Se perturban parámetros un 1%.'
+};
+let currentCase='normal',lastRun=null;
+function setCase(name){currentCase=name;document.querySelectorAll('[data-case]').forEach(b=>b.classList.toggle('active',b.dataset.case===name));Object.entries(presets[name]).forEach(([k,v])=>$(k).value=v);$('scenarioDescription').textContent=descriptions[name]}
+document.querySelectorAll('[data-case]').forEach(b=>b.addEventListener('click',()=>setCase(b.dataset.case)));
+function readParams(){const p={};['m','c','k','F0','omega','phi','x0','v0','T','N'].forEach(k=>p[k]=Number($(k).value));return p}
+function fmt(x){return Number(x).toExponential(4)}
+function draw(canvas,points,key,stroke){
+ const w=canvas.clientWidth||500,h=220,dpr=window.devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;
+ const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+ const vals=points.map(q=>q[key]);let lo=Math.min(...vals),hi=Math.max(...vals);if(Math.abs(hi-lo)<1e-12){hi+=1;lo-=1}
+ const pad={l:52,r:12,t:14,b:30},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+ ctx.font='10px Inter, sans-serif';ctx.fillStyle='#718096';ctx.strokeStyle='#e3ebf5';ctx.lineWidth=1;
+ for(let j=0;j<=4;j++){const yy=pad.t+j*ph/4;ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();ctx.fillText((hi-(hi-lo)*j/4).toPrecision(3),4,yy+3)}
+ for(let j=0;j<=4;j++){const xx=pad.l+j*pw/4;ctx.fillText((points[points.length-1].t*j/4).toFixed(1),xx-9,h-8)}
+ ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.beginPath();points.forEach((q,i)=>{const x=pad.l+pw*i/(points.length-1),y=pad.t+ph*(hi-q[key])/(hi-lo);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+ ctx.fillStyle='#718096';ctx.fillText('tiempo (s)',w/2-24,h-1);
+}
+function setStatus(message,error=false){$('status').className=error?'status err':'status';$('status').textContent=message}
+async function run(){
+ const button=$('simulate');button.disabled=true;button.textContent='Calculando…';
+ try{
+  const response=await fetch('/api/oscilaciones/simular',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...readParams(),escenario:currentCase})});
+  const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'No se pudo resolver la simulación.');
+  lastRun=result;const m=result.metricas;
+  $('mx').textContent=m.maximo_abs_desplazamiento_m.toFixed(5);$('mv').textContent=m.maxima_abs_velocidad_m_s.toFixed(5);$('integ').textContent=fmt(m.integral_romberg);$('err').textContent=fmt(m.error_max_RK4_vs_refinado_m);
+  draw($('cx'),result.puntos,'x','#087dcc');draw($('cv'),result.puntos,'v','#15966a');
+  $('quad').innerHTML=result.comparacion.map(q=>`<tr><td>${q.metodo}</td><td>${fmt(q.resultado)}</td><td>${fmt(q.error)}</td></tr>`).join('');
+  $('iterations').innerHTML=result.iteraciones.map(q=>`<tr><td>${q.t.toFixed(4)}</td><td>${q.x.toFixed(7)}</td><td>${q.v.toFixed(7)}</td><td>${q.fuerza.toFixed(4)}</td></tr>`).join('');
+  $('sensitivity').textContent=`${result.sensibilidad.perturbacion}: el cambio máximo entre trayectorias fue ${fmt(result.sensibilidad.diferencia_maxima_trayectorias_m)} m. Indicador relativo de sensibilidad: ${result.sensibilidad.indicador_relativo.toFixed(4)}.`;
+  $('numeric').textContent=result.conclusiones.numerica;$('physical').textContent=result.conclusiones.fisica;
+  setStatus(`Cálculo finalizado correctamente · Escenario ${result.escenario} · RK2, RK4, Trapecio, Simpson y Romberg ejecutados.`);
+ }catch(error){setStatus(error.message,true)}
+ finally{button.disabled=false;button.textContent='▶ Resolver módulo'}
+}
+$('simulate').addEventListener('click',run);
+$('reset').addEventListener('click',()=>{setCase('normal');run()});
+function getHistory(){try{return JSON.parse(localStorage.getItem('simtele_m3_history')||'[]')}catch{return []}}
+function renderHistory(){const history=getHistory();$('history').innerHTML=history.length?history.slice().reverse().map((r,i)=>`<div class="history-item"><strong>${r.scenario}</strong> · ${r.date}<br>Máx. |x| = ${r.mx} m · I = ${r.integral}<br><button class="btn btn-secondary" data-del="${history.length-1-i}">Eliminar</button></div>`).join(''):'<p class="muted" style="margin-top:10px">Todavía no hay ejecuciones guardadas.</p>';document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{const h=getHistory();h.splice(Number(b.dataset.del),1);localStorage.setItem('simtele_m3_history',JSON.stringify(h));renderHistory()}))}
+$('save').addEventListener('click',()=>{if(!lastRun){setStatus('Primero ejecutá una simulación.',true);return}const h=getHistory(),m=lastRun.metricas;h.push({scenario:lastRun.escenario,date:new Date().toLocaleString('es-BO'),mx:m.maximo_abs_desplazamiento_m.toFixed(6),integral:m.integral_romberg.toExponential(4),params:lastRun.parametros});localStorage.setItem('simtele_m3_history',JSON.stringify(h));renderHistory();setStatus('Ejecución guardada en el historial local del navegador.')});
+$('csv').addEventListener('click',()=>{if(!lastRun){setStatus('Primero ejecutá una simulación.',true);return}const p=lastRun.parametros,rows=['tiempo_s,desplazamiento_m,velocidad_m_s,fuerza_viento_N',...lastRun.puntos.map(q=>[q.t,q.x,q.v,p.F0*Math.sin(p.omega*q.t+p.phi)].join(','))],blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='SIMTELE_RISK_Modulo3_resultados.csv';a.click();URL.revokeObjectURL(url)});
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active')}));
+window.addEventListener('resize',()=>{if(lastRun){draw($('cx'),lastRun.puntos,'x','#087dcc');draw($('cv'),lastRun.puntos,'v','#15966a')}});
+setCase('normal');renderHistory();run();
+</script>
+</body>
+</html>
